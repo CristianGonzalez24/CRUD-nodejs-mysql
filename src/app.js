@@ -6,6 +6,6 @@ import doctorsRoutes from './routes/doctors.routes.js'
 const app = express();
 
 app.use(morgan('dev'));
-app.use('/', doctorsRoutes);
+app.use('/api', doctorsRoutes);
 
 app.listen(PORT, () => console.log('Server on port', PORT))
