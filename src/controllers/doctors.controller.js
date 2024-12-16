@@ -50,7 +50,6 @@ export const createDoctor = async (req, res) => {
             ]
         );
 
-        // Responde con el ID generado
         res.status(201).json({
             message: 'Doctor created successfully',
             doctor: {
@@ -65,3 +64,114 @@ export const createDoctor = async (req, res) => {
         });
     }
 };
+
+export const deleteDoctor = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const [existingDoctor] = await pool.query(
+            'SELECT * FROM doctors WHERE id = ?',
+            [id]
+        );
+
+        if (existingDoctor.length === 0) {
+            return res.status(404).json({
+                message: 'Doctor not found',
+            });
+        }
+
+        const [result] = await pool.query(
+            'DELETE FROM doctors WHERE id = ?',
+            [id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(500).json({
+                message: 'Failed to delete the doctor',
+            });
+        }
+
+        res.status(200).json({
+            message: 'Doctor deleted successfully',
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: 'An error occurred while deleting the doctor',
+            error: error.message,
+        });
+    }
+};
+
+export const updateDoctor = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { first_name, last_name, specialty, phone, email, years_of_experience } = req.body;
+
+        const [existingDoctor] = await pool.query(
+            'SELECT * FROM doctors WHERE id = ?',
+            [id]
+        );
+
+        if (existingDoctor.length === 0) {
+            return res.status(404).json({
+                message: 'Doctor not found',
+            });
+        }
+
+        if (email) {
+            const [emailCheck] = await pool.query(
+                'SELECT id FROM doctors WHERE email = ? AND id != ?',
+                [email, id]
+            );
+
+            if (emailCheck.length > 0) {
+                return res.status(400).json({
+                    message: 'Email already in use by another doctor',
+                });
+            }
+        }
+
+        if (phone) {
+            const [phoneCheck] = await pool.query(
+                'SELECT id FROM doctors WHERE phone = ? AND id != ?',
+                [phone, id]
+            );
+
+            if (phoneCheck.length > 0) {
+                return res.status(400).json({
+                    message: 'Phone number already in use by another doctor',
+                });
+            }
+        }
+
+        const [result] = await pool.query(
+            `UPDATE doctors SET 
+                first_name = COALESCE(?, first_name),
+                last_name = COALESCE(?, last_name),
+                specialty = COALESCE(?, specialty),
+                phone = COALESCE(?, phone),
+                email = COALESCE(?, email),
+                years_of_experience = COALESCE(?, years_of_experience)
+             WHERE id = ?`,
+            [first_name, last_name, specialty, phone, email, years_of_experience, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(500).json({
+                message: 'Failed to update the doctor',
+            });
+        }
+
+        res.status(200).json({
+            message: 'Doctor updated successfully',
+            updatedDoctor: { id, first_name, last_name, specialty, phone, email, years_of_experience },
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: 'An error occurred while updating the doctor',
+            error: error.message,
+        });
+    }
+};
+
+
