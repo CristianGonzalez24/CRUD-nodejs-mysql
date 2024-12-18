@@ -1,6 +1,6 @@
 import { pool } from '../db.js'
 
-export const getDoctors = async (req, res) => {
+export const getDoctors = async (req, res, next) => {
     try {
         const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
@@ -10,21 +10,22 @@ export const getDoctors = async (req, res) => {
             [parseInt(limit), parseInt(offset)]
         );
 
+        const [total] = await pool.query(`SELECT COUNT(*) AS count FROM doctors`);
+        const totalDoctors = total[0].count;
+
         res.json({
             message: 'Doctors retrieved successfully',
+            total: totalDoctors,
             data: rows,
             page: parseInt(page),
             limit: parseInt(limit),
         });
     } catch (error) {
-        res.status(500).json({
-            message: 'An error occurred while fetching the doctors',
-            error: error.message,
-        });
+        next(error);
     }
 };
 
-export const createDoctor = async (req, res) => {
+export const createDoctor = async (req, res, next) => {
     try {
         const doctor = req.validData;
 
@@ -58,14 +59,11 @@ export const createDoctor = async (req, res) => {
             },
         });
     } catch (error) {
-        res.status(500).json({
-            message: 'An error occurred while creating the doctor',
-            error: error.message,
-        });
+        next(error);
     }
 };
 
-export const deleteDoctor = async (req, res) => {
+export const deleteDoctor = async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -95,14 +93,11 @@ export const deleteDoctor = async (req, res) => {
             message: 'Doctor deleted successfully',
         });
     } catch (error) {
-        res.status(500).json({
-            message: 'An error occurred while deleting the doctor',
-            error: error.message,
-        });
+        next(error);
     }
 };
 
-export const updateDoctor = async (req, res) => {
+export const updateDoctor = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { first_name, last_name, specialty, phone, email, years_of_experience } = req.body;
@@ -152,7 +147,7 @@ export const updateDoctor = async (req, res) => {
                 phone = COALESCE(?, phone),
                 email = COALESCE(?, email),
                 years_of_experience = COALESCE(?, years_of_experience)
-             WHERE id = ?`,
+            WHERE id = ?`,
             [first_name, last_name, specialty, phone, email, years_of_experience, id]
         );
 
@@ -167,10 +162,7 @@ export const updateDoctor = async (req, res) => {
             updatedDoctor: { id, first_name, last_name, specialty, phone, email, years_of_experience },
         });
     } catch (error) {
-        res.status(500).json({
-            message: 'An error occurred while updating the doctor',
-            error: error.message,
-        });
+        next(error);
     }
 };
 
