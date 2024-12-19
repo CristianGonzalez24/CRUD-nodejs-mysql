@@ -54,7 +54,6 @@ export const getAllDoctors = async (req, res, next) => {
     }
 };
 
-
 export const createDoctor = async (req, res, next) => {
     try {
         const doctor = req.validData;
@@ -69,8 +68,8 @@ export const createDoctor = async (req, res, next) => {
         }
 
         const [result] = await pool.query(
-            `INSERT INTO doctors (first_name, last_name, specialty, phone, email, years_of_experience)
-                VALUES (?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO doctors (first_name, last_name, specialty, phone, email, years_of_experience, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
                 doctor.first_name,
                 doctor.last_name,
@@ -78,6 +77,7 @@ export const createDoctor = async (req, res, next) => {
                 doctor.phone,
                 doctor.email,
                 doctor.years_of_experience,
+                true,
             ]
         );
 
@@ -86,12 +86,14 @@ export const createDoctor = async (req, res, next) => {
             doctor: {
                 id: result.insertId,
                 ...doctor,
+                is_active: true,
             },
         });
     } catch (error) {
         next(error);
     }
 };
+
 
 export const deleteDoctor = async (req, res, next) => {
     try {
@@ -172,41 +174,24 @@ export const activateDoctor = async (req, res, next) => {
 export const updateDoctor = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { first_name, last_name, specialty, phone, email, years_of_experience } = req.body;
+        const { first_name, last_name, specialty, phone, email, years_of_experience, is_active } = req.body;
 
-        const [existingDoctor] = await pool.query(
-            'SELECT * FROM doctors WHERE id = ?',
-            [id]
-        );
-
+        const [existingDoctor] = await pool.query('SELECT * FROM doctors WHERE id = ?', [id]);
         if (existingDoctor.length === 0) {
             return res.status(404).json({
                 message: 'Doctor not found',
             });
         }
 
-        if (email) {
-            const [emailCheck] = await pool.query(
-                'SELECT id FROM doctors WHERE email = ? AND id != ?',
-                [email, id]
+        if (email || phone) {
+            const [duplicateCheck] = await pool.query(
+                'SELECT id FROM doctors WHERE (email = ? OR phone = ?) AND id != ?',
+                [email, phone, id]
             );
 
-            if (emailCheck.length > 0) {
+            if (duplicateCheck.length > 0) {
                 return res.status(400).json({
-                    message: 'Email already in use by another doctor',
-                });
-            }
-        }
-
-        if (phone) {
-            const [phoneCheck] = await pool.query(
-                'SELECT id FROM doctors WHERE phone = ? AND id != ?',
-                [phone, id]
-            );
-
-            if (phoneCheck.length > 0) {
-                return res.status(400).json({
-                    message: 'Phone number already in use by another doctor',
+                    message: 'Email or phone number already in use by another doctor',
                 });
             }
         }
@@ -218,9 +203,10 @@ export const updateDoctor = async (req, res, next) => {
                 specialty = COALESCE(?, specialty),
                 phone = COALESCE(?, phone),
                 email = COALESCE(?, email),
-                years_of_experience = COALESCE(?, years_of_experience)
+                years_of_experience = COALESCE(?, years_of_experience),
+                is_active = COALESCE(?, is_active)
             WHERE id = ?`,
-            [first_name, last_name, specialty, phone, email, years_of_experience, id]
+            [first_name, last_name, specialty, phone, email, years_of_experience, is_active, id]
         );
 
         if (result.affectedRows === 0) {
@@ -231,11 +217,9 @@ export const updateDoctor = async (req, res, next) => {
 
         res.status(200).json({
             message: 'Doctor updated successfully',
-            updatedDoctor: { id, first_name, last_name, specialty, phone, email, years_of_experience },
+            updatedDoctor: { id, first_name, last_name, specialty, phone, email, years_of_experience, is_active },
         });
     } catch (error) {
         next(error);
     }
 };
-
-
