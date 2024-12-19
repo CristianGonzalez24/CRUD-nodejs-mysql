@@ -6,24 +6,54 @@ export const getDoctors = async (req, res, next) => {
         const offset = (page - 1) * limit;
 
         const [rows] = await pool.query(
-            `SELECT * FROM doctors LIMIT ? OFFSET ?`,
+            `SELECT * FROM doctors WHERE is_active = TRUE LIMIT ? OFFSET ?`,
             [parseInt(limit), parseInt(offset)]
         );
 
-        const [total] = await pool.query(`SELECT COUNT(*) AS count FROM doctors`);
+        const [total] = await pool.query(
+            `SELECT COUNT(*) AS count FROM doctors WHERE is_active = TRUE`
+        );
         const totalDoctors = total[0].count;
 
         res.json({
-            message: 'Doctors retrieved successfully',
+            message: 'Active doctors retrieved successfully',
             total: totalDoctors,
             data: rows,
-            page: parseInt(page),
+            page: parseInt(page), 
             limit: parseInt(limit),
         });
     } catch (error) {
         next(error);
     }
 };
+
+export const getAllDoctors = async (req, res, next) => {
+    try {
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (page - 1) * limit;
+
+        const [rows] = await pool.query(
+            `SELECT * FROM doctors LIMIT ? OFFSET ?`,
+            [parseInt(limit), parseInt(offset)]
+        );
+
+        const [total] = await pool.query(
+            `SELECT COUNT(*) AS count FROM doctors`
+        );
+        const totalDoctors = total[0].count;
+
+        res.json({
+            message: 'All doctors retrieved successfully',
+            total: totalDoctors, 
+            data: rows,          
+            page: parseInt(page), 
+            limit: parseInt(limit), 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 export const createDoctor = async (req, res, next) => {
     try {
@@ -92,6 +122,48 @@ export const deleteDoctor = async (req, res, next) => {
         res.status(200).json({
             message: 'Doctor deleted successfully',
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const deactivateDoctor = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const [result] = await pool.query(
+            `UPDATE doctors SET is_active = FALSE WHERE id = ? AND is_active = TRUE`,
+            [id]
+        );
+
+        if (result.affectedRows === 0) {
+            const error = new Error('Doctor not found or already inactive');
+            error.status = 404;
+            throw error;
+        }
+
+        res.status(200).json({ message: 'Doctor marked as inactive successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const activateDoctor = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const [result] = await pool.query(
+            `UPDATE doctors SET is_active = TRUE WHERE id = ? AND is_active = FALSE`,
+            [id]
+        );
+
+        if (result.affectedRows === 0) {
+            const error = new Error('Doctor not found or already active');
+            error.status = 404;
+            throw error;
+        }
+
+        res.status(200).json({ message: 'Doctor reactivated successfully' });
     } catch (error) {
         next(error);
     }
