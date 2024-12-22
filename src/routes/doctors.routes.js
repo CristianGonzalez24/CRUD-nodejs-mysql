@@ -12,4 +12,4 @@ router.delete('/doctors/:id', deactivateDoctor)
 router.patch('/doctors/:id/activate', activateDoctor)
 router.put('/doctors/:id', validateSchema(doctorSchema), updateDoctor)
 
-export default router   
+export default router;

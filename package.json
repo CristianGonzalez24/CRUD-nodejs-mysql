@@ -1,7 +1,7 @@
 {
   "name": "mysql",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,6 +11,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "compression": "^1.7.5",
     "express": "^4.21.1",
     "mysql2": "^3.11.3",
     "zod": "^3.23.8"
