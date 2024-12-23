@@ -1,10 +1,10 @@
 import {
   getActiveDoctors, 
   countActiveDoctors, 
-  getAllDoctors, 
+  getAllDoctorsFromDB, 
   countAllDoctors,
   findDoctorByEmailOrPhone,
-  createDoctor,
+  createDoctorInDB,
   getDoctorById,
   deactivateDoctorById,
   activateDoctorById,
@@ -38,7 +38,7 @@ export const getAllDoctors = async (req, res, next) => {
         const { page = 1, limit = 10 } = req.query;
         const offset = (page - 1) * limit;
 
-        const doctors = await getAllDoctors(parseInt(limit), parseInt(offset));
+        const doctors = await getAllDoctorsFromDB(parseInt(limit), parseInt(offset));
         const totalDoctors = await countAllDoctors();
 
         res.json({
@@ -67,7 +67,7 @@ export const createDoctor = async (req, res, next) => {
           throw error;
         }
 
-        const doctorId = await createDoctor(doctor);
+        const doctorId = await createDoctorInDB(doctor);
         const newDoctor = await getDoctorById(doctorId);
 
         res.status(200).json({

@@ -15,7 +15,7 @@ export const countActiveDoctors = async () => {
     return total[0].count;
 };
 
-export const getAllDoctors = async (limit, offset) => {
+export const getAllDoctorsFromDB = async (limit, offset) => {
     const [rows] = await pool.query(
         `SELECT * FROM doctors LIMIT ? OFFSET ?`,
         [limit, offset]
@@ -38,7 +38,7 @@ export const findDoctorByEmailOrPhone = async (email, phone) => {
     return rows;
 };
 
-export const createDoctor = async (doctor) => {
+export const createDoctorInDB = async (doctor) => {
     const [result] = await pool.query(
         `INSERT INTO doctors (first_name, last_name, specialty, phone, email, years_of_experience, is_active)
         VALUES (?, ?, ?, ?, ?, ?, ?)`,
