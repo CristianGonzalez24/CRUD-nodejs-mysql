@@ -8,9 +8,9 @@ const router = Router();
 router.get('/doctors', getDoctors)
 router.get('/doctors/all', getAllDoctors)
 router.post('/doctors', validateSchema(doctorSchema), createDoctor)
-router.patch('/doctors/:id/deactivate', deactivateDoctor)
-router.patch('/doctors/:id/activate', activateDoctor)
 router.put('/doctors/:id', validateSchema(doctorSchema), updateDoctor)
 router.delete('/doctors/:id', deleteDoctor)
+router.patch('/doctors/:id/deactivate', deactivateDoctor)
+router.patch('/doctors/:id/activate', activateDoctor)
 
 export default router;
