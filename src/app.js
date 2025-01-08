@@ -2,44 +2,22 @@ import express from 'express'
 import helmet from 'helmet';
 import compression from "compression";
 import cors from 'cors';
-import { rateLimit } from 'express-rate-limit'
 import { PORT } from './config/config.js'
 import doctorsRoutes from './routes/doctors.routes.js'
 import { errorHandler } from './middlewares/errorHandler.js';
 
-// Node Bcrypt
 process.loadEnvFile();
 
+if (!process.env.NODE_ENV || !PORT) {
+    throw new Error('Environment variables not configured properly.');
+}
 const app = express();
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 50,
-    handler: (req, res) => {
-        res.status(429).json({
-            message: 'Too many requests. Try again after some time.',
-            retryAfter: Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000),
-        });
-    },
-});
 
-const allowedOrigins =
-    process.env.NODE_ENV === 'production'
-        ? [process.env.PRODUCTION_URL] 
-        : [process.env.FRONTEND_URL];
+import { limiter } from './config/rateLimit.js';
 
-const corsOptions = {
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'], 
-    credentials: true, 
-};
+import { corsOptions } from './config/corsOptions.js';
 
+// Middlewares
 app.use(express.json());
 app.use(helmet());
 app.use(
@@ -54,7 +32,18 @@ app.use(
 );
 app.use(limiter);
 app.use(cors(corsOptions));
+
+// Routes
 app.use('/api', doctorsRoutes);
+
+// Middleware for unknown routes
+app.use((req, res, next) => {
+    res.status(404).json({ message: 'Route not found' });
+});
+
+// Middleware for errors
 app.use(errorHandler);
 
-app.listen(PORT, () => console.log('Server on port', PORT));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+export default app;

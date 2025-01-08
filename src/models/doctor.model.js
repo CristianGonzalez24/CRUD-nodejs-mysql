@@ -3,10 +3,11 @@ import { pool } from "../config/db.js";
 export const getActiveDoctors = async (limit, offset) => {
     const [rows] = await pool.query(
         `SELECT * FROM doctors WHERE is_active = TRUE LIMIT ? OFFSET ?`,
-    [limit, offset]
+        [limit, offset]
     );
-    return rows;
+    return rows.length ? rows : [];
 };
+
 
 export const countActiveDoctors = async () => {
     const [total] = await pool.query(
@@ -20,7 +21,7 @@ export const getAllDoctorsFromDB = async (limit, offset) => {
         `SELECT * FROM doctors LIMIT ? OFFSET ?`,
         [limit, offset]
     );
-    return rows;
+    return rows.length ? rows : [];
 };
 
 export const countAllDoctors = async () => {
@@ -35,7 +36,7 @@ export const findDoctorByEmailOrPhone = async (email, phone) => {
         `SELECT * FROM doctors WHERE email = ? OR phone = ?`,
         [email, phone]
     );
-    return rows;
+    return rows.length ? rows : [];
 };
 
 export const createDoctorInDB = async (doctor) => {
@@ -56,11 +57,8 @@ export const createDoctorInDB = async (doctor) => {
 };
 
 export const getDoctorById = async (id) => {
-    const [rows] = await pool.query(
-        `SELECT * FROM doctors WHERE id = ?`,
-        [id]
-    );
-    return rows[0];
+    const [rows] = await pool.query('SELECT * FROM doctors WHERE id = ?', [id]);
+    return rows.length ? rows : [];
 };
 
 export const deactivateDoctorById = async (id) => {
