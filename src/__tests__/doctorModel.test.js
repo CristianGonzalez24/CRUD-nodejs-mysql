@@ -1,5 +1,5 @@
 import {jest} from '@jest/globals';
-import { mockDbQuery } from '../utils/mockDb.js';
+import { mockDbQuery } from '../__mocks__/mockDb.js';
 import { pool } from '../config/db.js';
 import { 
     getDoctorById, 
