@@ -1,14 +1,19 @@
 export const errorHandler = (err, req, res, next) => {
-    // console.error(err.stack);
+    const statusCodes = {
+        ValidationError: 400,
+        CastError: 400,
+        MongoError: err.code === 11000 ? 409 : 500,
+        Error: 500,
+    };
 
-    const statusCode = err.status || 500;
-    const message = err.message || 'Internal Server Error';
+    const statusCode = statusCodes[err.name] || 500;
+    const message = err.name === 'ValidationError' ? 'Validation Error' : 'Internal Server Error';
 
     res.status(statusCode).json({
         error: {
             message,
             status: statusCode,
-            details: err.details || null,
+            details: err.name === 'ValidationError' ? Object.values(err.errors).map(error => error.message) : null,
         },
     });
 };

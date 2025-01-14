@@ -5,12 +5,12 @@ import { doctorSchema } from '../validators/doctor.schema.js';
 
 const router = Router();
 
-router.get('/doctors', getDoctors)
-router.get('/doctors/all', getAllDoctors)
-router.post('/doctors', validateSchema(doctorSchema), createDoctor)
-router.put('/doctors/:id', validateSchema(doctorSchema), updateDoctor)
-router.delete('/doctors/:id', deleteDoctor)
-router.patch('/doctors/:id/deactivate', deactivateDoctor)
-router.patch('/doctors/:id/activate', activateDoctor)
+router.route('/doctors').get(getDoctors).post(validateSchema(doctorSchema), createDoctor);
+router.route('/doctors/all').get(getAllDoctors);
+router.route('/doctors/:id')
+    .put(validateSchema(doctorSchema), updateDoctor)
+    .delete(deleteDoctor)
+    .patch(deactivateDoctor)
+    .patch(activateDoctor);
 
 export default router;
