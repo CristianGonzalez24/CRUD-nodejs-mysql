@@ -5,6 +5,8 @@ import cors from 'cors';
 import { PORT } from './config/config.js'
 import doctorsRoutes from './routes/doctors.routes.js'
 import { errorHandler } from './middlewares/errorHandler.js';
+import { limiter } from './config/rateLimit.js';
+import { corsOptions } from './config/corsOptions.js';
 
 process.loadEnvFile();
 
@@ -12,10 +14,6 @@ if (!process.env.NODE_ENV || !PORT) {
     throw new Error('Environment variables not configured properly.');
 }
 const app = express();
-
-import { limiter } from './config/rateLimit.js';
-
-import { corsOptions } from './config/corsOptions.js';
 
 // Middlewares
 app.use(express.json());

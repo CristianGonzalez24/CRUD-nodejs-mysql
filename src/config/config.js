@@ -1,7 +1,10 @@
-export const PORT = process.env.PORT || 3000;
+export const database = {
+    connectionLimit: 10,
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'root',
+    database: process.env.DB_NAME || 'hospital',
+    port: process.env.DB_PORT || 3306
+}
 
-export const DB_HOST = process.env.DB_HOST || 'localhost'; 
-export const DB_USER = process.env.DB_USER || 'root'; 
-export const DB_PASSWORD = process.env.DB_PASSWORD || 'root'; 
-export const DB_NAME = process.env.DB_NAME || 'hospital';
-export const DB_PORT = process.env.DB_PORT || 3306;
+export const PORT = process.env.PORT || 3000;

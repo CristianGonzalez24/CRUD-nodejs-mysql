@@ -56,6 +56,7 @@ export const getAllDoctors = async (req, res, next) => {
 export const createDoctor = async (req, res, next) => {
     try {
         const doctor = req.validData;
+        console.log('Doctor data:', doctor); // Depuración
 
         const existingDoctor = await findDoctorByEmailOrPhone(doctor.email,doctor.phone);
 
@@ -66,10 +67,13 @@ export const createDoctor = async (req, res, next) => {
           error.status = 400;
           throw error;
         }
+        console.log('Existing doctor:', existingDoctor);
 
         const doctorId = await createDoctorInDB(doctor);
+        console.log('Doctor ID:', doctorId); // Depuración
         const newDoctor = await getDoctorById(doctorId);
 
+        console.log('New doctor data:', newDoctor); // Depuración
         res.status(200).json({
             message: 'Doctor created successfully',
             doctor: newDoctor,

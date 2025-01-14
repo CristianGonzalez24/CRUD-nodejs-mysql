@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { getDoctors } from '../controllers/doctors.controller.js';
+import { getDoctors, getAllDoctors, createDoctor, deactivateDoctor, activateDoctor, updateDoctor, deleteDoctor } from '../controllers/doctors.controller.js';
 import { pool } from '../config/db.js';
 
 describe('doctorsControllers', () => {
@@ -29,8 +29,14 @@ describe('doctorsControllers', () => {
     let req, res, next;
 
     beforeEach(() => {
-        req = { query: {} };
-        res = { json: jest.fn() };
+        req = { 
+            query: {},
+            validData: {} 
+        };
+        res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
         next = jest.fn();
     });
     afterEach(() => {
@@ -86,8 +92,75 @@ describe('doctorsControllers', () => {
         });
         
     });
-});
 
+    describe('getAllDoctors', () => {      
+        it('should return a list of all doctors and total count when successful', async () => {        
+            req.query = { page: '1', limit: '10' };        
+            jest.spyOn(pool, 'query')            
+                .mockResolvedValueOnce([mockResponse]) // getAllDoctorsFromDB
+                .mockResolvedValueOnce([[{ count: mockResponse.length }]]); // countAllDoctors
+        
+            await getAllDoctors(req, res, next);
+        
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'All doctors retrieved successfully',
+                total: mockResponse.length,
+                data: mockResponse,
+                page: 1,
+                limit: 10,
+            });
+        
+            expect(next).not.toHaveBeenCalled();
+        });
+
+        it('should handle errors thrown during getAllDoctorsFromDB', async () => {
+            req.query = { page: '1', limit: '10' };
+
+            const mockError = new Error('Database query failed');
+    
+            jest.spyOn(pool, 'query').mockRejectedValueOnce(mockError); 
+    
+            await getAllDoctors(req, res, next);
+            
+            expect(next).toHaveBeenCalledWith(mockError);
+            expect(res.json).not.toHaveBeenCalled();
+        });
+    
+        it('should handle errors thrown during countAllDoctors', async () => {
+            req.query = { page: '1', limit: '10' };
+    
+            const mockError = new Error('Count query failed');
+    
+            jest.spyOn(pool, 'query')
+                .mockResolvedValueOnce([mockResponse]) 
+                .mockRejectedValueOnce(mockError); 
+    
+            await getAllDoctors(req, res, next);
+            
+            expect(next).toHaveBeenCalledWith(mockError);
+            expect(res.json).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('createDoctor', () => {
+        it('should create a new doctor and return a success message', async () => {
+            req.validData = mockResponse[0];
+        
+            jest.spyOn(pool, 'query')
+                .mockResolvedValueOnce([mockResponse[0]])
+                .mockResolvedValueOnce([[{ insertId: mockResponse[0].id }]])
+        
+            await createDoctor(req, res, next);
+        
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Doctor created successfully',
+                doctor: [],
+            });
+        
+            expect(next).not.toHaveBeenCalled();
+        });
+    })
+});
 
 
 
