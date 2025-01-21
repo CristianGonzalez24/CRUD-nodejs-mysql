@@ -21,12 +21,16 @@ export const doctorSchema = z.object({
         }),
     email: z
         .string()
-        .email({message: 'Invalid email'})
+        .email("Invalid email format")
         .optional(),
     years_of_experience: z
         .number()
         .int()
-        .nonnegative("Years of experience must be a positive number"),
+        .nonnegative("Years of experience must be a positive number")
+        .optional(),
+    is_active: z
+        .boolean()
+        .optional(),
 });
 
 // const formatPhone = (phone) => {

@@ -1,12 +1,12 @@
 import express from 'express'
 import helmet from 'helmet';
 import compression from "compression";
+import { limiter } from './config/rateLimit.js';
 import cors from 'cors';
-import { PORT } from './config/config.js'
+import { corsOptions } from './config/corsOptions.js';
 import doctorsRoutes from './routes/doctors.routes.js'
 import { errorHandler } from './middlewares/errorHandler.js';
-import { limiter } from './config/rateLimit.js';
-import { corsOptions } from './config/corsOptions.js';
+import { PORT } from './config/config.js'
 
 process.loadEnvFile();
 

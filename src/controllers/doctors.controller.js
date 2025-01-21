@@ -14,73 +14,117 @@ import {
 } from '../models/doctor.model.js';
 
 export const getDoctors = async (req, res, next) => {
-    try {
-        const { page = 1, limit = 10 } = req.query;
-        const offset = (page - 1) * limit;
+  const { limit = 10, page = 1 } = req.query;
 
-        const doctors = await getActiveDoctors(parseInt(limit), parseInt(offset));
-        const totalDoctors = await countActiveDoctors();
+  const validLimit = parseInt(limit, 10);
+  const validPage = parseInt(page, 10);
 
-        res.json({
-            message: 'Active doctors retrieved successfully',
-            total: totalDoctors,
-            data: doctors,
-            page: parseInt(page),
-            limit: parseInt(limit),
-        });
-    } catch (error) {
-        next(error);
-    }
+  if (!Number.isInteger(validLimit) || validLimit <= 0 || 
+      !Number.isInteger(validPage) || validPage <= 0) {
+    return next({
+      message: "Both 'limit' and 'page' must be positive integers",
+      status: 400,
+    });
+  }
+
+  try {
+    const [doctors, totalDoctors] = await Promise.all([
+      getActiveDoctors(validLimit, (validPage - 1) * validLimit),
+      countActiveDoctors(),
+    ]);
+
+    res.status(200).json({
+      message: "Active doctors retrieved successfully",
+      total: totalDoctors,
+      totalPages: Math.ceil(totalDoctors / validLimit),
+      data: doctors,
+      page: validPage,
+      limit: validLimit,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const getAllDoctors = async (req, res, next) => {
-    try {
-        const { page = 1, limit = 10 } = req.query;
-        const offset = (page - 1) * limit;
+  const { limit = 10, page = 1 } = req.query;
 
-        const doctors = await getAllDoctorsFromDB(parseInt(limit), parseInt(offset));
-        const totalDoctors = await countAllDoctors();
+  const validPage = parseInt(page, 10);
+  const validLimit = parseInt(limit, 10);
 
-        res.json({
-            message: 'All doctors retrieved successfully',
-            total: totalDoctors,
-            data: doctors,
-            page: parseInt(page),
-            limit: parseInt(limit),
-        });
-    } catch (error) {
-        next(error);
-    }
+  if (isNaN(validPage) || isNaN(validLimit) || validPage <= 0 || validLimit <= 0) {
+    return next({
+      message: "Limit and page must be positive integers",
+      status: 400,
+    });
+  }
+
+  try {
+    const [doctors, totalDoctors] = await Promise.all([
+      getAllDoctorsFromDB(validLimit, (validPage - 1) * validLimit),
+      countAllDoctors(),
+    ]);
+
+    res.status(200).json({
+      message: "All doctors retrieved successfully",
+      total: totalDoctors,
+      totalPages: Math.ceil(totalDoctors / validLimit),
+      data: doctors,
+      page: validPage,
+      limit: validLimit,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const createDoctor = async (req, res, next) => {
-    try {
-        const doctor = req.validData;
-        console.log('Doctor data:', doctor); // Depuración
 
-        const existingDoctor = await findDoctorByEmailOrPhone(doctor.email,doctor.phone);
+  const doctor = req.validData;
 
-        if (existingDoctor.length > 0) {
-          const error = new Error(
-            "Doctor with this email or phone already exists"
-          );
-          error.status = 400;
-          throw error;
-        }
-        console.log('Existing doctor:', existingDoctor);
+  if (!doctor) {
+      return next({
+          message: "Doctor object is invalid or missing required fields",
+          status: 400,
+      });
+  }
 
-        const doctorId = await createDoctorInDB(doctor);
-        console.log('Doctor ID:', doctorId); // Depuración
-        const newDoctor = await getDoctorById(doctorId);
+  try {
+    const existingDoctor = await findDoctorByEmailOrPhone(doctor.email, doctor.phone);
+      if (existingDoctor.length > 0) {
+          return next({
+              message: "Doctor with this email or phone already exists",
+              status: 400,
+          });
+      }
+    console.log('Existing doctor:', existingDoctor);
 
-        console.log('New doctor data:', newDoctor); // Depuración
-        res.status(200).json({
-            message: 'Doctor created successfully',
-            doctor: newDoctor,
-        });
-    } catch (error) {
-        next(error);
-    }
+    const doctorId = await createDoctorInDB(doctor);
+      if (!doctorId) {
+          return next({
+              message: "Failed to create doctor: Unable to generate ID",
+              status: 500,
+          });
+      }
+    console.log('Doctor ID:', doctorId); 
+
+    const newDoctor = await getDoctorById(doctorId);
+      if (!newDoctor) {
+          return next({
+              message: "Failed to retrieve the newly created doctor from the database",
+              status: 500,
+          });
+      }
+    console.log('New doctor data:', newDoctor); 
+
+    res.status(201).json({
+      message: "Doctor created successfully",
+      data: newDoctor,
+  });
+  } catch (error) {
+    console.error('Error occurred while creating doctor:', error);
+    next(error);
+  }
 };
 
 export const deactivateDoctor = async (req, res, next) => {

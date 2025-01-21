@@ -1,19 +1,23 @@
 export const errorHandler = (err, req, res, next) => {
-    const statusCodes = {
-        ValidationError: 400,
-        CastError: 400,
-        MongoError: err.code === 11000 ? 409 : 500,
-        Error: 500,
-    };
+    try {
+        const statusCode = err.status || 500;
+        const message = err.message || 'Internal Server Error';
 
-    const statusCode = statusCodes[err.name] || 500;
-    const message = err.name === 'ValidationError' ? 'Validation Error' : 'Internal Server Error';
-
-    res.status(statusCode).json({
-        error: {
-            message,
-            status: statusCode,
-            details: err.name === 'ValidationError' ? Object.values(err.errors).map(error => error.message) : null,
-        },
-    });
+        res.status(statusCode).json({
+            error: {
+                message: message,
+                status: statusCode,
+                details: err.details || null, 
+            },
+        });
+    } catch (loggingError) {
+        console.error('Failed to handle error properly:', loggingError);
+        res.status(500).json({
+            error: {
+                message: 'Unexpected error occurred',
+                status: 500,
+                details: null,
+            },
+        });
+    }
 };

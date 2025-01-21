@@ -1,5 +1,5 @@
 import {jest} from '@jest/globals';
-import { mockDbQuery } from '../__mocks__/mockDb.js';
+import { mockDbQuery, mockDbQueryError } from '../__mocks__/mockDb.js';
 import { pool } from '../config/db.js';
 import { 
     getDoctorById, 
@@ -53,13 +53,13 @@ describe('doctorsModels', () => {
             "is_active": 1
         },
     ];
+    const limit = 2;
+    const offset = 0;
 
     describe('getActiveDoctors', () => {
         it('should return a list of active doctors when the query is successful', async () => {
             mockDbQuery(mockResponse);
 
-            const limit = 2;
-            const offset = 0;
             const doctors = await getActiveDoctors(limit, offset);
 
             expect(doctors).toEqual(mockResponse);
@@ -68,19 +68,18 @@ describe('doctorsModels', () => {
         it('should return an empty array when no active doctors are found', async () => {           
             mockDbQuery([]);
         
-            const limit = 2;
-            const offset = 0;       
             const doctors = await getActiveDoctors(limit, offset);
         
             expect(doctors).toEqual([]);  
         });
 
-        it('should throw an error if limit is not a non-negative integer', async () => {
-            await expect(getActiveDoctors(1.5, 0)).rejects.toThrow('Limit and offset must be non-negative integers');
-        });
-
-        it('should throw an error if offset is not a non-negative integer', async () => {
-            await expect(getActiveDoctors(1, -1)).rejects.toThrow('Limit and offset must be non-negative integers');
+        it('should throw an error with the correct message when the query fails', async () => {
+            const mockError = new Error('Database connection error');
+            mockDbQueryError(mockError);
+        
+            await expect(getActiveDoctors(limit, offset)).rejects.toThrow(
+                `Failed to retrieve active doctors. Limit: ${limit}, Offset: ${offset}`
+            );
         });
     });
 
@@ -105,7 +104,7 @@ describe('doctorsModels', () => {
 
         it('should throw an error if the query fails', async () => {
             const mockError = new Error("Failed to count active doctors");
-            jest.spyOn(pool, 'query').mockRejectedValueOnce(mockError);
+            mockDbQueryError(mockError);
 
             await expect(countActiveDoctors()).rejects.toThrow(mockError);
 
@@ -117,8 +116,6 @@ describe('doctorsModels', () => {
         it('should return a list of doctors when the query is successful', async () => {
             mockDbQuery(mockResponse);
     
-            const limit = 2;
-            const offset = 0;
             const doctors = await getAllDoctorsFromDB(limit, offset);
     
             expect(doctors).toEqual(mockResponse);
@@ -127,33 +124,32 @@ describe('doctorsModels', () => {
         it('should return an empty array when no doctors are found', async () => {
             mockDbQuery([]);
     
-            const limit = 2;
-            const offset = 0;
             const doctors = await getAllDoctorsFromDB(limit, offset);
     
             expect(doctors).toEqual([]);
         });
 
-        it('should throw an error if limit is not a non-negative integer', async () => {
-            await expect(getAllDoctorsFromDB(1.5, 0)).rejects.toThrow('Limit and offset must be non-negative integers');
-        });
+        it('should throw an error with the correct message when the query fails', async () => {
+            const mockError = new Error('Database connection error');
+            mockDbQueryError(mockError);
         
-        it('should throw an error if offset is not a non-negative integer', async () => {
-            await expect(getAllDoctorsFromDB(1, -1)).rejects.toThrow('Limit and offset must be non-negative integers');
+            await expect(getAllDoctorsFromDB(limit, offset)).rejects.toThrow(
+                `Failed to retrieve doctors. Limit: ${limit}, Offset: ${offset}`
+            );
         });
     });
 
     describe('countAllDoctors', () => {
         it('should return the total count of doctors in the database', async () => {
             mockDbQuery([{ count: 10 }]);
-    
+            
             const total = await countAllDoctors();
 
             expect(total).toBe(10);
         });
-    
+        
         it('should return 0 when there are no doctors in the database', async () => {
-            mockDbQuery([{}]);
+            mockDbQuery([{ count: 0 }]);
     
             const total = await countAllDoctors();
 
@@ -161,8 +157,8 @@ describe('doctorsModels', () => {
         });
 
         it('should throw an error if the query fails', async () => {
-            const mockError = new Error("Failed to count all doctors");
-            jest.spyOn(pool, 'query').mockRejectedValueOnce(mockError);
+            const mockError = new Error("Failed to count doctors in the database");
+            mockDbQueryError(mockError);
 
             await expect(countAllDoctors()).rejects.toThrow(mockError);
 
@@ -192,8 +188,8 @@ describe('doctorsModels', () => {
         });
 
         it('should throw an error if the query fails', async () => {
-            const mockError = new Error("Failed to find doctor by email or phone");
-            jest.spyOn(pool, 'query').mockRejectedValueOnce(mockError);
+            const mockError = new Error("Database query failed in findDoctorByEmailOrPhone");
+            mockDbQueryError(mockError);
 
             await expect(findDoctorByEmailOrPhone('johndoe@hotmail.com', '0000000000')).rejects.toThrow(mockError);
 
@@ -201,46 +197,37 @@ describe('doctorsModels', () => {
         });
 
         it('should throw an error if both email and phone are not provided', async () => {
-            await expect(findDoctorByEmailOrPhone(null, null)).rejects.toThrow('Either email or phone must be provided');
+            await expect(findDoctorByEmailOrPhone(null, null)).rejects.toThrow('Both email and phone are missing in findDoctorByEmailOrPhone');
         });
     });
 
     describe('createDoctorInDB', () => {
-        const fakeDoctor = {
-            phone: '123456',
-            email: 'example@example.com',
-            years_of_experience: 2,
-        };
-        
-        it('should throw an error if the doctor object is null or undefined', async () => {
-            await expect(createDoctorInDB(null)).rejects.toThrow("Cannot create doctor: doctor object is null or undefined");
-        });
-
-        it('should throw an error if the doctor object is missing required properties', async () => {
-
-            await expect(createDoctorInDB(fakeDoctor)).rejects.toThrow('Cannot create doctor: first name, last name, and specialty are required');
-        });
 
         it('should return the insertId when the doctor is successfully created', async () => {
-            const mockInsertId = {
-                insertId: 1,
-            };
-
-            mockDbQuery(mockInsertId);
-
+            mockDbQuery({insertId: 1});
+            
             const result = await createDoctorInDB(mockResponse[0]);
-
-            expect(result).toEqual(mockInsertId.insertId);
+            
+            expect(result).toEqual(1);
+            expect(pool.query).toHaveBeenCalledTimes(1);
         });
+        
+        it('should return null if insertId is null or undefined', async () => {
+            mockDbQuery({ insertId: null });
+        
+            const result = await createDoctorInDB(mockResponse[0]);
+            expect(result).toBeNull();
+            expect(pool.query).toHaveBeenCalledTimes(1);
+        });               
     
         it('should throw an error if the query fails', async () => {
-            const mockError = new Error("Failed to create doctor");
-            jest.spyOn(pool, 'query').mockRejectedValueOnce(mockError);
-
+            const mockError = new Error("Database query failed in createDoctorInDB");
+            mockDbQueryError(mockError);
+            
             await expect(createDoctorInDB(mockResponse[0])).rejects.toThrow(mockError);
-
+            
             jest.spyOn(pool, 'query').mockRestore();
-        });
+        });        
     });
 
     describe('getDoctorById', () => {
@@ -266,7 +253,7 @@ describe('doctorsModels', () => {
 
         it('should throw an error if the query fails', async () => {
             const mockError = new Error("Failed to find doctor by ID");
-            jest.spyOn(pool, 'query').mockRejectedValueOnce(mockError);
+            mockDbQueryError(mockError);
 
             await expect(getDoctorById(1)).rejects.toThrow(mockError);
 

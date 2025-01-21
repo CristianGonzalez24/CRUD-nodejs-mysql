@@ -1,112 +1,109 @@
 import { pool } from "../config/db.js";
 
 export const getActiveDoctors = async (limit, offset) => {
-    if (!Number.isInteger(limit) || !Number.isInteger(offset) || limit < 0 || offset < 0) {
-        throw new Error("Limit and offset must be non-negative integers");
-    }
-    const [rows] = await pool.query(
+    try {
+      const [rows] = await pool.query(
         `SELECT * FROM doctors WHERE is_active = TRUE LIMIT ? OFFSET ?`,
         [limit, offset]
-    );
-    return rows;
+      );
+      return rows;
+    } catch (error) {
+      throw new Error(`Failed to retrieve active doctors. Limit: ${limit}, Offset: ${offset}`);
+    }
 };
 
 export const countActiveDoctors = async () => {
     try {
-        const [result] = await pool.query(
-            `SELECT COUNT(*) AS count FROM doctors WHERE is_active = TRUE`
-        );
-        return result?.[0]?.count || 0;
+      const [result] = await pool.query(
+        `SELECT COUNT(*) AS count FROM doctors WHERE is_active = TRUE`
+      );
+  
+      if (!result?.[0]?.count && result?.[0]?.count !== 0) {
+        throw new Error("Unexpected result format from database");
+      }
+  
+      return result[0].count || 0;
     } catch (error) {
-        throw new Error("Failed to count active doctors");
+      throw new Error("Failed to count active doctors");
     }
 };
 
 export const getAllDoctorsFromDB = async (limit, offset) => {
-    if (!Number.isInteger(limit) || !Number.isInteger(offset) || limit < 0 || offset < 0) {
-        throw new Error("Limit and offset must be non-negative integers");
-    }
-
     try {
-        const [rows] = await pool.query(
-            `SELECT * FROM doctors LIMIT ? OFFSET ?`,
-            [limit, offset]
-        );
-        return rows;
+      const [rows] = await pool.query(
+        `SELECT * FROM doctors LIMIT ? OFFSET ?`,
+        [limit, offset]
+      );
+      return rows;
     } catch (error) {
-        throw new Error("Failed to retrieve doctors from the database");
+      throw new Error(`Failed to retrieve doctors. Limit: ${limit}, Offset: ${offset}`);
     }
 };
 
 export const countAllDoctors = async () => {
     try {
-        const [result] = await pool.query(
-            `SELECT COUNT(*) AS count FROM doctors`
-        );
-        return result?.[0]?.count || 0;
+      const [result] = await pool.query(
+        `SELECT COUNT(*) AS count FROM doctors`
+      );
+
+      if (!result?.[0]?.count && result?.[0]?.count !== 0) {
+        throw new Error("Unexpected result structure: count is missing");
+      }
+
+      return result?.[0]?.count || 0;
     } catch (error) {
-        throw new Error("Failed to count all doctors");
+      throw new Error("Failed to count doctors in the database");
     }
 };
 
 export const findDoctorByEmailOrPhone = async (email, phone) => {
     if (!email && !phone) {
-        throw new Error("Either email or phone must be provided");
+        throw new Error("Both email and phone are missing in findDoctorByEmailOrPhone");
     }
 
     try {
-        const [rows] = await pool.query(
-            `SELECT * FROM doctors WHERE email = ? OR phone = ?`,
-            [email, phone]
-        );
-        return rows.length ? rows : [];
+        const query = `
+            SELECT * FROM doctors 
+            WHERE (email = ? OR phone = ?) AND is_active = TRUE
+        `;
+        const [rows = []] = await pool.query(query, [email || null, phone || null]);
+        
+        if (!Array.isArray(rows)) {
+            throw new Error("Unexpected response format from database.");
+        }
+
+        return rows;
     } catch (error) {
-        throw new Error("Failed to find doctor by email or phone");
+        throw new Error('Database query failed in findDoctorByEmailOrPhone');
     }
 };
 
 export const createDoctorInDB = async (doctor) => {
-    if (!doctor) {
-        throw new Error("Cannot create doctor: doctor object is null or undefined");
-    }
-
-    const {
-        first_name,
-        last_name,
-        specialty,
-        phone,
-        email,
-        years_of_experience,
-    } = doctor;
-
-    if (!first_name || !last_name || !specialty) {
-        throw new Error("Cannot create doctor: first name, last name, and specialty are required");
-    }
-
     try {
         const [result] = await pool.query(
             `INSERT INTO doctors (first_name, last_name, specialty, phone, email, years_of_experience, is_active)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
-                first_name,
-                last_name,
-                specialty,
-                phone,
-                email,
-                years_of_experience,
-                true,
+                doctor.first_name,
+                doctor.last_name,
+                doctor.specialty,
+                doctor.phone,
+                doctor.email,
+                doctor.years_of_experience || 0,
+                true, 
             ]
         );
 
         if (!result.insertId) {
-            throw new Error("Failed to create doctor: insertId is null or undefined");
+            return null;
         }
-
+        
         return result.insertId;
     } catch (error) {
-        throw new Error("Failed to create doctor");
+        throw new Error("Database query failed in createDoctorInDB");
     }
 };
+
 
 export const getDoctorById = async (id) => {
     if (!id) {

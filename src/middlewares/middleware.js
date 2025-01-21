@@ -7,9 +7,10 @@ export const validateSchema = (schema) => (req, res, next) => {
         req.validData = validData; 
         next();
     } catch (error) {
-        if (error.errors) {
-            return res.status(400).json(error.errors.map(e => e.message));
-        }
-        return res.status(500).json([{ message: 'Internal Server Error' }]);
+        next({
+            message: "Validation error",
+            status: 400,
+            details: error.errors || error.message,
+        });
     }
 };
