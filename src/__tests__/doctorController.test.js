@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import { mockDbQueryError, mockDbQuery } from '../__mocks__/mockDb.js';
-import { getDoctors, getAllDoctors, createDoctor, deactivateDoctor } from '../controllers/doctors.controller.js';
+import { getDoctors, getAllDoctors, createDoctor, deactivateDoctor, activateDoctor } from '../controllers/doctors.controller.js';
 import { pool } from '../config/db.js';
 
 describe('doctorsControllers', () => {
@@ -348,8 +348,81 @@ describe('doctorsControllers', () => {
             await deactivateDoctor(req, res, next);
         
             expect(next).toHaveBeenCalledWith(
-                new Error('Failed to update doctor status: Unexpected error')
+                new Error(`Failed to update doctor status: ${mockError.message}`)
             );
         });       
+    });
+
+    describe('activateDoctor', () => {
+        it('should return 400 if doctor ID is invalid', async () => {
+            req.params.id = null;
+    
+            await activateDoctor(req, res, next);
+    
+            expect(next).toHaveBeenCalledWith({
+                message: "Doctor ID must be a positive integer",
+                status: 400,
+            });
+        });
+
+        it('should return 404 if doctor does not exist', async () => {
+            req.params.id = 999;
+    
+            mockDbQuery([]);
+    
+            await activateDoctor(req, res, next);
+    
+            expect(next).toHaveBeenCalledWith({
+                message: "Doctor not found",
+                status: 404,
+            });
+        });
+
+        it('should return 404 if doctor is already active', async () => {
+            req.params.id = 1;
+    
+            jest.spyOn(pool, 'query')
+                .mockResolvedValueOnce([[{ id: 1, is_active: true }]]) 
+                .mockResolvedValueOnce([{ affectedRows: 0 }]);
+    
+            await activateDoctor(req, res, next);
+    
+            expect(next).toHaveBeenCalledWith({
+                message: "Doctor not found or already active",
+                status: 404,
+            });
+        });
+
+        it('should activate the doctor successfully', async () => {
+            req.params.id = 1;
+    
+            jest.spyOn(pool, 'query')
+                .mockResolvedValueOnce([[{ id: 1, is_active: false }]]) 
+                .mockResolvedValueOnce([{ affectedRows: 1 }]); 
+    
+            await activateDoctor(req, res, next);
+    
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: "Doctor reactivated successfully",
+                doctorId: req.params.id,
+            });
+            expect(next).not.toHaveBeenCalled();
+        });
+
+        it('should handle unexpected errors', async () => {
+            req.params.id = 1;
+    
+            const mockError = new Error("Unexpected error");
+    
+            jest.spyOn(pool, 'query')
+                .mockResolvedValueOnce([[{ id: 1, is_active: false }]]) 
+                .mockRejectedValueOnce(mockError);
+    
+            await activateDoctor(req, res, next);
+    
+            expect(next).toHaveBeenCalledWith(
+                new Error(`Failed to update doctor status: ${mockError.message}`));
+        });     
     });
 });

@@ -143,7 +143,7 @@ export const deactivateDoctor = async (req, res, next) => {
       }
 
       const success = await deactivateDoctorById(id);
-      if (!success) {
+      if (!success || success.affectedRows === 0) {
           return next({
               message: "Failed to deactivate doctor",
               status: 500,
@@ -159,23 +159,37 @@ export const deactivateDoctor = async (req, res, next) => {
   }
 };
 
-
 export const activateDoctor = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    if (!id || isNaN(id) || parseInt(id, 10) <= 0) {
+      return next({
+        message: "Doctor ID must be a positive integer",
+        status: 400,
+      });
+    }
+
+    const existingDoctor = await getDoctorById(id);
+    if (!existingDoctor) {
+      return next({
+        message: "Doctor not found",
+        status: 404,
+      });
+    }
+
     const result = await activateDoctorById(id);
 
-    if (result.affectedRows === 0) {
-      const error = new Error(
-        "Doctor not found or already active"
-      );
-      error.status = 404;
-      throw error;
+    if (!result || result.affectedRows === 0) {
+      return next({
+        message: "Doctor not found or already active",
+        status: 404,
+      });
     }
 
     res.status(200).json({
       message: "Doctor reactivated successfully",
+      doctorId: id,
     });
   } catch (error) {
     next(error);

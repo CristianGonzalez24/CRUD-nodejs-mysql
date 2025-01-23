@@ -115,7 +115,7 @@ export const getDoctorById = async (id) => {
         if (!rows || !Array.isArray(rows)) {
             throw new Error("Unexpected database response format");
         }
-        
+
         return rows[0] || null;
     } catch (error) {
         throw new Error(`Failed to retrieve doctor by ID: ${error.message}`);
@@ -136,20 +136,16 @@ export const deactivateDoctorById = async (id) => {
 
 
 export const activateDoctorById = async (id) => {
-    if (!id) {
-        throw new Error("Doctor ID is required");
-    }
+    try {
+        const [result] = await pool.query(
+            `UPDATE doctors SET is_active = TRUE WHERE id = ? AND is_active = FALSE`,
+            [id]
+        );
 
-    const [result] = await pool.query(
-        `UPDATE doctors SET is_active = TRUE WHERE id = ? AND is_active = FALSE`,
-        [id]
-    );
-        
-    if (result.affectedRows === 0) {
-        throw new Error("Failed to activate doctor");
+        return result.affectedRows > 0;
+    } catch (error) {
+        throw new Error(`Failed to update doctor status: ${error.message}`);
     }
-
-    return result;
 };
 
 export const checkDuplicateDoctor = async (email, phone, id) => {
