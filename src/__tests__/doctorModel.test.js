@@ -234,39 +234,54 @@ describe('doctorsModels', () => {
         it('should throw an error if the doctor ID is missing', async () => {
             await expect(getDoctorById(null)).rejects.toThrow('Doctor ID is required');
         });
-
-        it('should return a doctor when a valid ID is provided', async () => {
-            mockDbQuery([mockResponse[0]]);
-
-            const doctor = await getDoctorById(1);
-
-            expect(doctor).toEqual([mockResponse[0]]);
-        });
-
-        it('should return an empty array when no doctor is found', async () => {
+    
+        it('should return null if the doctor does not exist in the database', async () => {
             mockDbQuery([]);
-
-            const doctor = await getDoctorById(2);
-
-            expect(doctor).toEqual([]); 
+            const result = await getDoctorById(999);
+            expect(result).toBeNull();
+            expect(pool.query).toHaveBeenCalledWith(
+                'SELECT * FROM doctors WHERE id = ?',
+                [999]
+            );
         });
 
-        it('should throw an error if the query fails', async () => {
-            const mockError = new Error("Failed to find doctor by ID");
+        it('should return the doctor if the ID exists in the database', async () => {   
+            mockDbQuery([mockResponse[0]]);
+            const result = await getDoctorById(1);
+            expect(result).toEqual(mockResponse[0]);
+            expect(pool.query).toHaveBeenCalledWith(
+                'SELECT * FROM doctors WHERE id = ?',
+                [1]
+            );
+        });
+
+        it('should throw an error if the database response format is invalid', async () => {
+            mockDbQuery(undefined);
+            await expect(getDoctorById(1)).rejects.toThrow(
+                'Failed to retrieve doctor by ID: Unexpected database response format'
+            );
+            expect(pool.query).toHaveBeenCalledWith(
+                'SELECT * FROM doctors WHERE id = ?',
+                [1]
+            );
+        });
+        
+        it('should throw an error if the database query fails', async () => {
+            const mockError = new Error('Database connection failed');
             mockDbQueryError(mockError);
-
-            await expect(getDoctorById(1)).rejects.toThrow(mockError);
-
-            jest.spyOn(pool, 'query').mockRestore();
+    
+            await expect(getDoctorById(1)).rejects.toThrow(
+                'Failed to retrieve doctor by ID: Database connection failed'
+            );
+            expect(pool.query).toHaveBeenCalledWith(
+                'SELECT * FROM doctors WHERE id = ?',
+                [1]
+            );
         });
     });
 
     describe('deactivateDoctorById', () => {
-        it('should throw an error if the doctor ID is missing', async () => {
-            await expect(deactivateDoctorById(null)).rejects.toThrow('Doctor ID is required');
-        });
-
-        it('should deactivate a doctor when a valid ID is provided', async () => {
+        it('should deactivate a doctor and return true for a valid ID', async () => {
             const mockResponse = {
                 affectedRows: 1,
             };
@@ -276,17 +291,43 @@ describe('doctorsModels', () => {
             const id = 1;
             const result = await deactivateDoctorById(id);
     
-            expect(result).toEqual(mockResponse);
+            expect(result).toBe(true); 
+            expect(pool.query).toHaveBeenCalledWith(
+                `UPDATE doctors SET is_active = FALSE WHERE id = ? AND is_active = TRUE`,
+                [id]
+            );
         });
 
-        it('should not deactivate a doctor if the ID does not exist or the doctor is already inactive', async () => {
+        it('should return false if the doctor ID does not exist or is already inactive', async () => {
             const mockResponse = {
                 affectedRows: 0,
             };
-
+    
             mockDbQuery(mockResponse);
+    
+            const id = 999;
+            const result = await deactivateDoctorById(id);
+    
+            expect(result).toBe(false);
+            expect(pool.query).toHaveBeenCalledWith(
+                `UPDATE doctors SET is_active = FALSE WHERE id = ? AND is_active = TRUE`,
+                [id]
+            );
+        });
 
-            await expect(deactivateDoctorById(999)).rejects.toThrow('Failed to deactivate doctor');
+        it('should throw an error if the database query fails', async () => {
+            const mockError = new Error('Database query failed');
+    
+            mockDbQueryError(mockError);
+    
+            const id = 1;
+            await expect(deactivateDoctorById(id)).rejects.toThrow(
+                `Failed to update doctor status: ${mockError.message}`
+            );
+            expect(pool.query).toHaveBeenCalledWith(
+                `UPDATE doctors SET is_active = FALSE WHERE id = ? AND is_active = TRUE`,
+                [id]
+            );
         });
     });
 

@@ -104,32 +104,36 @@ export const createDoctorInDB = async (doctor) => {
     }
 };
 
-
 export const getDoctorById = async (id) => {
     if (!id) {
         throw new Error("Doctor ID is required");
     }
 
-    const [doctor] = await pool.query('SELECT * FROM doctors WHERE id = ?', [id]);
-    return doctor || [];
+    try {
+        const [rows] = await pool.query('SELECT * FROM doctors WHERE id = ?', [id]);
+
+        if (!rows || !Array.isArray(rows)) {
+            throw new Error("Unexpected database response format");
+        }
+        
+        return rows[0] || null;
+    } catch (error) {
+        throw new Error(`Failed to retrieve doctor by ID: ${error.message}`);
+    }
 };
 
 export const deactivateDoctorById = async (id) => {
-    if (!id) {
-        throw new Error("Doctor ID is required");
+    try {
+        const [result] = await pool.query(
+            `UPDATE doctors SET is_active = FALSE WHERE id = ? AND is_active = TRUE`,
+            [id]
+        );
+        return result.affectedRows > 0;
+    } catch (error) {
+        throw new Error("Failed to update doctor status: " + error.message);
     }
-
-    const [result] = await pool.query(
-        `UPDATE doctors SET is_active = FALSE WHERE id = ? AND is_active = TRUE`,
-        [id]
-    );
-
-    if (result.affectedRows === 0) {
-        throw new Error("Failed to deactivate doctor");
-    }
-
-    return result;
 };
+
 
 export const activateDoctorById = async (id) => {
     if (!id) {

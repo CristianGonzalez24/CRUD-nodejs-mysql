@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
-import { mockDbQueryError } from '../__mocks__/mockDb.js';
-import { getDoctors, getAllDoctors, createDoctor } from '../controllers/doctors.controller.js';
+import { mockDbQueryError, mockDbQuery } from '../__mocks__/mockDb.js';
+import { getDoctors, getAllDoctors, createDoctor, deactivateDoctor } from '../controllers/doctors.controller.js';
 import { pool } from '../config/db.js';
 
 describe('doctorsControllers', () => {
@@ -35,6 +35,7 @@ describe('doctorsControllers', () => {
         req = { 
             query: { page: '1', limit: '10' }, 
             validData: {},
+            params: {},
         };
         res = {
             status: jest.fn().mockReturnThis(), // Permite el encadenamiento
@@ -196,18 +197,18 @@ describe('doctorsControllers', () => {
             req.validData = mockResponse[0];
         
             jest.spyOn(pool, 'query')
-                // Primer mock: buscar doctor existente (retorna vacío)
-                .mockResolvedValueOnce([])
+                // Primer mock: buscar doctor existente (devolver vacío)
+                .mockResolvedValueOnce([[]]) // Siempre debe ser un arreglo anidado
                 // Segundo mock: insertar doctor (retorna el ID insertado)
                 .mockResolvedValueOnce([{ insertId: mockResponse[0].id }])
                 // Tercer mock: recuperar doctor recién creado (retorna el doctor creado)
-                .mockResolvedValueOnce([mockResponse[0]]);
-
+                .mockResolvedValueOnce([[mockResponse[0]]]); // También debe ser un arreglo anidado
+        
             await createDoctor(req, res, next);
         
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.json).toHaveBeenCalledWith({
-                message: 'Doctor created successfully',
+                message: "Doctor created successfully",
                 data: mockResponse[0],
             });
         
@@ -234,10 +235,10 @@ describe('doctorsControllers', () => {
             
             await createDoctor(req, res, next);
             
-            expect(next).toHaveBeenCalledWith(expect.objectContaining({
+            expect(next).toHaveBeenCalledWith({
                 message: "Doctor with this email or phone already exists",
                 status: 400,
-            }));
+            });
             expect(res.json).not.toHaveBeenCalled();
         });
         
@@ -256,6 +257,99 @@ describe('doctorsControllers', () => {
             });
             
             expect(res.json).not.toHaveBeenCalled();
+        });   
+        
+        it('should return an error if the newly created doctor cannot be retrieved', async () => {
+            req.validData = mockResponse[0];
+        
+            jest.spyOn(pool, 'query')
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([{ insertId: mockResponse[0].id }])
+                .mockResolvedValueOnce([[]]); 
+        
+            await createDoctor(req, res, next);
+        
+            expect(next).toHaveBeenCalledWith({
+                message: "Failed to retrieve the newly created doctor from the database",
+                status: 500,
+            });
+            
+            expect(res.json).not.toHaveBeenCalled();
+        });      
+    });
+
+    describe('deactivateDoctor', () => {
+        it('should return 400 if the doctor ID is missing', async () => {
+            req.params.id = null;
+    
+            await deactivateDoctor(req, res, next);
+    
+            expect(next).toHaveBeenCalledWith({
+                message: "Doctor ID must be a positive integer",
+                status: 400,
+            });
+        });
+
+        it('should return 404 if the doctor does not exist', async () => {
+            req.params.id = 1;
+            mockDbQuery([null]);
+    
+            await deactivateDoctor(req, res, next);
+    
+            expect(next).toHaveBeenCalledWith({
+                message: "Doctor not found",
+                status: 404,
+            });
+        });
+
+        it('should return 500 if deactivation fails', async () => {
+            req.params.id = 1;
+        
+            jest.spyOn(pool, 'query')
+                // getDoctorById
+                .mockResolvedValueOnce([[{ id: 1, is_active: true }]]) 
+                // deactivateDoctorById
+                .mockResolvedValueOnce([{ affectedRows: 0 }]);
+        
+            await deactivateDoctor(req, res, next);
+        
+            expect(next).toHaveBeenCalledWith({
+                message: "Failed to deactivate doctor",
+                status: 500,
+            });
+        });
+
+        it('should deactivate a doctor successfully', async () => {
+            req.params.id = 1;
+        
+            jest.spyOn(pool, 'query')
+                .mockResolvedValueOnce([[{ id: 1, is_active: true }]])
+                .mockResolvedValueOnce([{ affectedRows: 1 }]);
+        
+            await deactivateDoctor(req, res, next);
+        
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: "Doctor marked as inactive successfully",
+                doctorId: req.params.id,
+            });
+            expect(next).not.toHaveBeenCalled();
+        });
+        
+        it('should handle unexpected errors', async () => {
+            req.params.id = 1;
+        
+            const mockError = new Error('Unexpected error');
+        
+            jest.spyOn(pool, 'query')
+                .mockResolvedValueOnce([[{ id: 1, is_active: true }]])
+                .mockRejectedValueOnce(mockError);
+        
+            await deactivateDoctor(req, res, next);
+        
+            expect(next).toHaveBeenCalledWith(
+                new Error('Failed to update doctor status: Unexpected error')
+            );
         });       
     });
 });

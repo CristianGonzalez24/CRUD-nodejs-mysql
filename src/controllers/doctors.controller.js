@@ -97,7 +97,6 @@ export const createDoctor = async (req, res, next) => {
               status: 400,
           });
       }
-    console.log('Existing doctor:', existingDoctor);
 
     const doctorId = await createDoctorInDB(doctor);
       if (!doctorId) {
@@ -106,7 +105,6 @@ export const createDoctor = async (req, res, next) => {
               status: 500,
           });
       }
-    console.log('Doctor ID:', doctorId); 
 
     const newDoctor = await getDoctorById(doctorId);
       if (!newDoctor) {
@@ -115,39 +113,52 @@ export const createDoctor = async (req, res, next) => {
               status: 500,
           });
       }
-    console.log('New doctor data:', newDoctor); 
 
     res.status(201).json({
       message: "Doctor created successfully",
       data: newDoctor,
   });
   } catch (error) {
-    console.error('Error occurred while creating doctor:', error);
     next(error);
   }
 };
 
 export const deactivateDoctor = async (req, res, next) => {
   try {
-    const { id } = req.params;
+      const { id } = req.params;
 
-    const result = await deactivateDoctorById(id);
+      if (!id || isNaN(id) || parseInt(id, 10) <= 0) {
+          return next({
+              message: "Doctor ID must be a positive integer",
+              status: 400,
+          });
+      }
 
-    if (result.affectedRows === 0) {
-      const error = new Error(
-        "Doctor not found or already inactive"
-      );
-      error.status = 404;
-      throw error;
-    }
+      const existingDoctor = await getDoctorById(id);
+      if (!existingDoctor) {
+          return next({
+              message: "Doctor not found",
+              status: 404,
+          });
+      }
 
-    res.status(200).json({
-      message: "Doctor marked as inactive successfully",
-    });
+      const success = await deactivateDoctorById(id);
+      if (!success) {
+          return next({
+              message: "Failed to deactivate doctor",
+              status: 500,
+          });
+      }
+
+      res.status(200).json({
+          message: "Doctor marked as inactive successfully",
+          doctorId: id,
+      });
   } catch (error) {
-    next(error);
+      next(error);
   }
 };
+
 
 export const activateDoctor = async (req, res, next) => {
   try {
