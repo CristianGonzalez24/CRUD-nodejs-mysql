@@ -209,21 +209,28 @@ export const updateDoctor = async (req, res, next) => {
       is_active,
     } = req.body;
 
+    if (!id || isNaN(id) || parseInt(id, 10) <= 0) {
+      return next({
+        message: "Doctor ID must be a positive integer",
+        status: 400,
+      });
+    }
+
     const existingDoctor = await getDoctorById(id);
     if (!existingDoctor) {
-      const error = new Error("Doctor not found");
-      error.status = 404;
-      throw error;
+      return next({
+        message: "Doctor not found",
+        status: 404,
+      });
     }
 
     if (email || phone) {
       const hasDuplicate = await checkDuplicateDoctor(email, phone, id);
       if (hasDuplicate) {
-        const error = new Error(
-          "Email or phone number already in use by another doctor"
-        );
-        error.status = 400;
-        throw error;
+        return next({
+          message: "Email or phone number already in use by another doctor",
+          status: 400,
+        });
       }
     }
 
@@ -237,10 +244,11 @@ export const updateDoctor = async (req, res, next) => {
       is_active,
     });
 
-    if (result.affectedRows === 0) {
-      const error = new Error("Failed to update the doctor");
-      error.status = 500;
-      throw error;
+    if (!result || result.affectedRows === 0) {
+      return next({
+        message: "Failed to update the doctor",
+        status: 500,
+      });
     }
 
     res.status(200).json({

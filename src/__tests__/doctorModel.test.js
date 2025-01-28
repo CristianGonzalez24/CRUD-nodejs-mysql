@@ -383,38 +383,135 @@ describe('doctorsModels', () => {
     });
 
     describe('checkDuplicateDoctor', () => {
-        it('should throw an error if the doctor ID is missing', async () => {
-            await expect(checkDuplicateDoctor('example@example.com', '123456', null)).rejects.toThrow('Doctor ID is required');
+        it("should throw an error if both email and phone are null", async () => {
+            await expect(checkDuplicateDoctor(null, null, mockResponse[0].id)).rejects.toThrow(
+                "Both email and phone are missing in checkDuplicateDoctor"
+            );
+        
+            expect(pool.query).not.toHaveBeenCalled();
         });
 
-        it('should throw an error if both email and phone are missing', async () => {
-            await expect(checkDuplicateDoctor(null, null, 1)).rejects.toThrow('Either email or phone must be provided');
-        });
-
-        it('should return true if a duplicate doctor is found', async () => {
-            const mockInsertId = [
-                { id: 2 },
-            ];
-    
-            mockDbQuery(mockInsertId);
-    
+        it("should return true if duplicates are found", async () => {       
+            mockDbQuery([[{ id: 2 }]]); // Mock a duplicate result
+        
             const result = await checkDuplicateDoctor(mockResponse[0].email, mockResponse[0].phone, mockResponse[0].id);
+        
+            expect(pool.query).toHaveBeenCalledWith(
+                "SELECT id FROM doctors WHERE (email = ? OR phone = ?) AND id != ?",
+                [mockResponse[0].email, mockResponse[0].phone, mockResponse[0].id]
+            );
+            expect(result).toBe(true);
+        });
+
+        it("should return false if no duplicates are found", async () => {
+            mockDbQuery([]); // Mock an empty result
+
+            const result = await checkDuplicateDoctor(mockResponse[0].email, mockResponse[0].phone, mockResponse[0].id);
+
+            expect(pool.query).toHaveBeenCalledWith(
+                "SELECT id FROM doctors WHERE (email = ? OR phone = ?) AND id != ?",
+                [mockResponse[0].email, mockResponse[0].phone, mockResponse[0].id]
+            );
+            expect(result).toBe(false);
+        });
+
+        it("should throw an error if the database query fails", async () => {
+            const email = "error@example.com";
+            const phone = "1112223333";
+            const id = 1;
+        
+            const mockError = new Error("Database query failed");
+            mockDbQueryError(mockError);
+        
+            await expect(checkDuplicateDoctor(mockResponse[0].email, mockResponse[0].phone, mockResponse[0].id)).rejects.toThrow(
+                "Database query failed in checkDuplicateDoctor"
+            );
+        
+            expect(pool.query).toHaveBeenCalledWith(
+                "SELECT id FROM doctors WHERE (email = ? OR phone = ?) AND id != ?",
+                [mockResponse[0].email, mockResponse[0].phone, mockResponse[0].id]
+            );
+        });
+    });
+
+    describe('updateDoctorById', () => {
+        const updatedData = {
+            first_name: 'UpdatedName',
+            last_name: 'UpdatedLastName',
+            specialty: 'UpdatedSpecialty',
+            phone: '1234567890',
+            email: 'updated.email@example.com',
+            years_of_experience: 5,
+            is_active: true,
+        };
+
+        it("should return true when a doctor is successfully updated", async () => {        
+            const mockResponse = { affectedRows: 1 };
+
+            mockDbQuery(mockResponse); 
+
+            const result = await updateDoctorById(1, updatedData);
+
+            expect(result).toBe(true);
+
+            expect(pool.query).toHaveBeenCalledWith(
+                expect.stringContaining("UPDATE doctors SET"),
+                expect.arrayContaining([
+                updatedData.first_name,
+                updatedData.last_name,
+                updatedData.specialty,
+                updatedData.phone,
+                updatedData.email,
+                updatedData.years_of_experience,
+                updatedData.is_active,
+                1,
+            ]));
+        });
+    
+        it("should return false if no rows are affected (ID does not exist)", async () => {
+            const mockResponse = { affectedRows: 0 };
+            mockDbQuery(mockResponse);
+
+            const result = await updateDoctorById(999, updatedData);
+
+            expect(result).toBe(false);
+
+            expect(pool.query).toHaveBeenCalledWith(
+                expect.stringContaining("UPDATE doctors SET"),
+                expect.any(Array)
+            );
+        });
+    
+        it('should allow partial updates by using NULL values for unchanged fields', async () => {
+            const mockResponse = {
+                affectedRows: 1,
+            };
+    
+            mockDbQuery(mockResponse);
+    
+            const updatedData = {
+                first_name: null, 
+                last_name: 'NewLastName',
+                specialty: null, 
+                phone: null, 
+                email: null, 
+                years_of_experience: null, 
+                is_active: null,
+            };
+    
+            const result = await updateDoctorById(1, updatedData);
     
             expect(result).toBe(true);
         });
-    
-        it('should return false if no duplicate doctor is found', async () => {
-            const mockInsertId = [];
-    
-            mockDbQuery(mockInsertId);
-    
-            const email = 'newdoctor@example.com';
-    
-            const result = await checkDuplicateDoctor(email, mockResponse[0].phone, mockResponse[0].id);
-    
-            expect(result).toBe(false);
+
+        it("should throw an error if the database query fails", async () => {
+            mockDbQueryError(new Error("Database error"));
+        
+            await expect(updateDoctorById(1, mockResponse[0])).rejects.toThrow(
+                "Failed to update doctor: Database error"
+            );
         });
-    });
+    });    
 
     describe('deleteDoctorById', () => {
         it('should throw an error if the doctor ID is missing', async () => {
@@ -444,64 +541,4 @@ describe('doctorsModels', () => {
             await expect(deleteDoctorById(999)).rejects.toThrow("Failed to delete doctor");
         });
     });
-
-    describe('updateDoctorById', () => {
-        const updatedData = {
-            first_name: 'UpdatedName',
-            last_name: 'UpdatedLastName',
-            specialty: 'UpdatedSpecialty',
-            phone: '1234567890',
-            email: 'updated.email@example.com',
-            years_of_experience: 5,
-            is_active: true,
-        };
-
-        it('should throw an error if the doctor ID is missing', async () => {
-            await expect(updateDoctorById(null, {})).rejects.toThrow('Doctor ID is required');
-        });
-
-        it('should return the result object when a doctor is successfully updated', async () => {
-            const mockResponse = {
-                affectedRows: 1,
-            };
-    
-            mockDbQuery(mockResponse);
-    
-            const result = await updateDoctorById(1, updatedData);
-    
-            expect(result).toEqual(mockResponse);
-        });
-    
-        it('should return a result with affectedRows as 0 if no doctor is found with the given ID', async () => {
-            const mockResponse = {
-                affectedRows: 0,
-            };
-    
-            mockDbQuery(mockResponse);
-    
-            await expect(updateDoctorById(999, updatedData)).rejects.toThrow("Failed to update doctor");
-        });
-    
-        it('should allow partial updates by using NULL values for unchanged fields', async () => {
-            const mockResponse = {
-                affectedRows: 1,
-            };
-    
-            mockDbQuery(mockResponse);
-    
-            const updatedData = {
-                first_name: null, 
-                last_name: 'NewLastName',
-                specialty: null, 
-                phone: null, 
-                email: null, 
-                years_of_experience: null, 
-                is_active: null,
-            };
-    
-            const result = await updateDoctorById(1, updatedData);
-    
-            expect(result).toEqual(mockResponse);
-        });
-    });    
 });

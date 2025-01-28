@@ -149,20 +149,60 @@ export const activateDoctorById = async (id) => {
 };
 
 export const checkDuplicateDoctor = async (email, phone, id) => {
-    if (!id) {
-        throw new Error("Doctor ID is required");
-    }
 
     if (!email && !phone) {
-        throw new Error("Either email or phone must be provided");
+        throw new Error("Both email and phone are missing in checkDuplicateDoctor");
     }
+    try {
+        const [rows] = await pool.query(
+            "SELECT id FROM doctors WHERE (email = ? OR phone = ?) AND id != ?",
+            [email, phone, id]
+        );
 
-    const [rows] = await pool.query(
-        "SELECT id FROM doctors WHERE (email = ? OR phone = ?) AND id != ?",
-        [email, phone, id]
-    );
+        return rows.length > 0;
+    } catch (error) {
+        throw new Error("Database query failed in checkDuplicateDoctor");
+    }
+};
 
-    return rows.length > 0;
+export const updateDoctorById = async (
+    id,
+    {
+        first_name,
+        last_name,
+        specialty,
+        phone,
+        email,
+        years_of_experience,
+        is_active,
+    }
+) => {
+    try {
+        const [result] = await pool.query(
+            `UPDATE doctors SET 
+                first_name = COALESCE(?, first_name),
+                last_name = COALESCE(?, last_name),
+                specialty = COALESCE(?, specialty),
+                phone = COALESCE(?, phone),
+                email = COALESCE(?, email),
+                years_of_experience = COALESCE(?, years_of_experience),
+                is_active = COALESCE(?, is_active)
+            WHERE id = ?`,
+        [
+            first_name,
+            last_name,
+            specialty,
+            phone,
+            email,
+            years_of_experience,
+            is_active,
+            id,
+        ]);
+
+        return result.affectedRows > 0;
+    } catch (error) {
+        throw new Error(`Failed to update doctor: ${error.message}`);
+    }
 };
 
 export const deleteDoctorById = async (id) => {
@@ -181,53 +221,3 @@ export const deleteDoctorById = async (id) => {
 
     return result;
 };
-
-export const updateDoctorById = async (
-    id,
-    {
-        first_name,
-        last_name,
-        specialty,
-        phone,
-        email,
-        years_of_experience,
-        is_active,
-    }
-) => {
-    if (!id) {
-        throw new Error("Doctor ID is required");
-    }
-
-    try {
-        const [result] = await pool.query(
-            `UPDATE doctors SET 
-                first_name = COALESCE(?, first_name),
-                last_name = COALESCE(?, last_name),
-                specialty = COALESCE(?, specialty),
-                phone = COALESCE(?, phone),
-                email = COALESCE(?, email),
-                years_of_experience = COALESCE(?, years_of_experience),
-                is_active = COALESCE(?, is_active)
-            WHERE id = ?`,
-            [
-                first_name,
-                last_name,
-                specialty,
-                phone,
-                email,
-                years_of_experience,
-                is_active,
-                id,
-            ]
-        );
-
-        if (result.affectedRows === 0) {
-            throw new Error("Failed to update doctor: doctor not found or no changes made");
-        }
-
-        return result;
-    } catch (error) {
-        throw new Error("Failed to update doctor");
-    }
-};
-
