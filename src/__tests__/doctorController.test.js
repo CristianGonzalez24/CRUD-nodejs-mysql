@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import { mockDbQueryError, mockDbQuery } from '../__mocks__/mockDb.js';
-import { getDoctors, getAllDoctors, createDoctor, deactivateDoctor, activateDoctor } from '../controllers/doctors.controller.js';
+import { getDoctors, getAllDoctors, createDoctor, deactivateDoctor, activateDoctor, updateDoctor } from '../controllers/doctors.controller.js';
 import { pool } from '../config/db.js';
 
 describe('doctorsControllers', () => {
@@ -32,10 +32,14 @@ describe('doctorsControllers', () => {
     let req, res, next;
 
     beforeEach(() => {
+        jest.restoreAllMocks();
+        jest.clearAllMocks();
+
         req = { 
             query: { page: '1', limit: '10' }, 
             validData: {},
             params: {},
+            body: {},
         };
         res = {
             status: jest.fn().mockReturnThis(), // Permite el encadenamiento
@@ -425,4 +429,130 @@ describe('doctorsControllers', () => {
                 new Error(`Failed to update doctor status: ${mockError.message}`));
         });     
     });
+
+    describe("updateDoctor", () => {
+        it("should return 400 if doctor ID is invalid", async () => {
+            req.params.id = null;
+        
+            await updateDoctor(req, res, next);
+        
+            expect(next).toHaveBeenCalledWith({
+                message: "Doctor ID must be a positive integer",
+                status: 400,
+            });
+        });
+
+        it("should return 404 if doctor is not found", async () => {
+            req.params.id = 1;
+
+            mockDbQuery([]);
+
+            await updateDoctor(req, res, next);
+
+            expect(pool.query).toHaveBeenCalledWith(
+                "SELECT * FROM doctors WHERE id = ?",
+                [1]
+            );
+
+            expect(next).toHaveBeenCalledWith({
+                message: "Doctor not found",
+                status: 404,
+            });
+        });
+
+        it("should return 400 if email or phone is already in use by another doctor", async () => {
+            req.params.id = 1;
+            req.body = {
+                email: "duplicate@example.com",
+                phone: "1234567890",
+            };
+
+            jest.spyOn(pool, 'query')
+                .mockResolvedValueOnce([[{ id: 1 }]])
+                .mockResolvedValueOnce([[{ id: 2 }]]);
+
+            await updateDoctor(req, res, next);
+
+            expect(pool.query).toHaveBeenCalledWith(
+                "SELECT id FROM doctors WHERE (email = ? OR phone = ?) AND id != ?",
+                ["duplicate@example.com", "1234567890", 1]
+            );
+
+            expect(next).toHaveBeenCalledWith({
+                message: "Email or phone number already in use by another doctor",
+                status: 400,
+            });
+        });
+
+        it("should return 500 if no rows are affected (failed update)", async () => {
+            req.params.id = 999;
+            req.body = {
+                first_name: "UpdatedName",
+                last_name: "UpdatedLastName",
+            };
+            
+            jest.spyOn(pool, "query")
+                .mockResolvedValueOnce([[{ id: 999 }]])
+                .mockResolvedValueOnce([[]])
+                .mockResolvedValueOnce([{ affectedRows: 0 }]);
+        
+            await updateDoctor(req, res, next);
+        
+            expect(next).toHaveBeenCalledWith({
+                message: "Failed to update the doctor",
+                status: 500,
+            });
+        });
+        
+        it("should return 200 and updated doctor data when update is successful", async () => {
+            req.params.id = 1;
+            req.body = {
+                first_name: "UpdatedName",
+                last_name: "UpdatedLastName",
+                specialty: "UpdatedSpecialty",
+                phone: "1234567890",
+                email: "updated.email@example.com",
+                years_of_experience: 10,
+                is_active: true,
+            };
+        
+            jest.spyOn(pool, "query")
+                .mockResolvedValueOnce([[{ id: 1 }]])
+                .mockResolvedValueOnce([[]]) 
+                .mockResolvedValueOnce([{ affectedRows: 1 }]); 
+
+            await updateDoctor(req, res, next);
+        
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: "Doctor updated successfully",
+                updatedDoctor: {
+                    id: 1,
+                    first_name: "UpdatedName",
+                    last_name: "UpdatedLastName",
+                    specialty: "UpdatedSpecialty",
+                    phone: "1234567890",
+                    email: "updated.email@example.com",
+                    years_of_experience: 10,
+                    is_active: true,
+                },
+            });
+        });
+        
+        it("should call next with an error if an unexpected error occurs", async () => {
+            req.params.id = 1;
+            req.body = {
+                first_name: "UpdatedName",
+                last_name: "UpdatedLastName",
+            };
+        
+            mockDbQueryError(new Error("Database connection failed"));
+        
+            await updateDoctor(req, res, next);
+        
+            expect(next).toHaveBeenCalledWith(expect.any(Error));
+        });        
+    });
+
+    
 });

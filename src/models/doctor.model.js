@@ -198,6 +198,7 @@ export const updateDoctorById = async (
             is_active,
             id,
         ]);
+        // console.log("Resultado de updateDoctorById:", result);
 
         return result.affectedRows > 0;
     } catch (error) {
