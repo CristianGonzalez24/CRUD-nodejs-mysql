@@ -514,31 +514,32 @@ describe('doctorsModels', () => {
     });    
 
     describe('deleteDoctorById', () => {
-        it('should throw an error if the doctor ID is missing', async () => {
-            await expect(deleteDoctorById(null)).rejects.toThrow('Doctor ID is required');
-        });
-
-        it('should return the result object when a doctor is successfully deleted', async () => {
-            const mockResponse = {
-                affectedRows: 1,
-            };
-
+        it("should delete a doctor successfully and return the result", async () => {
+            const mockResponse = { affectedRows: 1 };
             mockDbQuery(mockResponse);
-
-            const id = 1;
-            const result = await deleteDoctorById(id);
-
+        
+            const result = await deleteDoctorById(1);
+        
             expect(result).toEqual(mockResponse);
+            expect(pool.query).toHaveBeenCalledWith("DELETE FROM doctors WHERE id = ?", [1]);
         });
 
-        it('should throw an error if no doctor is found', async () => {
-            const mockResponse = {
-                affectedRows: 0,
-            };
-
+        it("should return null if no doctor is deleted (ID does not exist)", async () => {
+            const mockResponse = { affectedRows: 0 };
             mockDbQuery(mockResponse);
+        
+            const result = await deleteDoctorById(999); // ID inexistente
+        
+            expect(result).toBeNull();
+            expect(pool.query).toHaveBeenCalledWith("DELETE FROM doctors WHERE id = ?", [999]);
+        });
 
-            await expect(deleteDoctorById(999)).rejects.toThrow("Failed to delete doctor");
+        it("should throw an error if the database query fails", async () => {
+            mockDbQueryError(new Error("Database connection failed"));
+        
+            await expect(deleteDoctorById(1)).rejects.toThrow("Failed to delete doctor: Database connection failed");
+        
+            expect(pool.query).toHaveBeenCalledWith("DELETE FROM doctors WHERE id = ?", [1]);
         });
     });
 });

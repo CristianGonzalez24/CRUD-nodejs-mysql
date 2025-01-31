@@ -207,18 +207,14 @@ export const updateDoctorById = async (
 };
 
 export const deleteDoctorById = async (id) => {
-    if (!id) {
-        throw new Error("Doctor ID is required");
-    }
+    try {
+        const [result] = await pool.query(
+            "DELETE FROM doctors WHERE id = ?",
+            [id]
+        );
 
-    const [result] = await pool.query(
-        "DELETE FROM doctors WHERE id = ?",
-        [id]
-    );
-        
-    if (result.affectedRows === 0) {
-        throw new Error("Failed to delete doctor");
+        return result.affectedRows > 0 ? result : null;
+    } catch (error) {
+        throw new Error(`Failed to delete doctor: ${error.message}`);
     }
-
-    return result;
 };

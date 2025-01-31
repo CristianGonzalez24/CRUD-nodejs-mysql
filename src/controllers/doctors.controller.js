@@ -280,19 +280,27 @@ export const deleteDoctor = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    if (!id || isNaN(id) || parseInt(id, 10) <= 0) {
+      return next({
+        message: "Doctor ID must be a positive integer",
+        status: 400,
+      });
+    }
+
     const existingDoctor = await getDoctorById(id);
     if (!existingDoctor) {
-      const error = new Error("Doctor not found");
-      error.status = 404;
-      throw error;
+      return next({
+        message: "Doctor not found",
+        status: 404,
+      });
     }
 
     const result = await deleteDoctorById(id);
-
-    if (result.affectedRows === 0) {
-      const error = new Error("Failed to delete the doctor");
-      error.status = 500;
-      throw error;
+    if (!result) {
+      return next({
+        message: "Failed to delete the doctor",
+        status: 500,
+      });
     }
 
     res.status(200).json({
