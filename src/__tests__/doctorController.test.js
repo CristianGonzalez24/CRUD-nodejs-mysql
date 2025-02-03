@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { mockDbQueryError, mockDbQuery } from '../__mocks__/mockDb.js';
-import { getDoctors, getAllDoctors, createDoctor, deactivateDoctor, activateDoctor, updateDoctor } from '../controllers/doctors.controller.js';
 import { pool } from '../config/db.js';
+import * as dc from '../controllers/doctors.controller.js';
 
 describe('doctorsControllers', () => {
     const mockResponse = [
@@ -64,7 +64,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([mockResponse]) 
                 .mockResolvedValueOnce([[{ count: mockResponse.length }]]);
 
-            await getDoctors(req, res, next); 
+            await dc.getDoctors(req, res, next); 
     
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
@@ -82,7 +82,7 @@ describe('doctorsControllers', () => {
         it('should throw an error if limit is not a positive integer', async () => {
             const req = { query: { limit: '0', page: '1' } };
         
-            await getDoctors(req, res, next);
+            await dc.getDoctors(req, res, next);
         
             expect(next).toHaveBeenCalledWith(expect.objectContaining({
                 message: "Both 'limit' and 'page' must be positive integers",
@@ -94,7 +94,7 @@ describe('doctorsControllers', () => {
         it('should throw an error if page is not a positive integer', async () => {
             req.query = { page: '0', limit: '10' };
     
-            await getDoctors(req, res, next);
+            await dc.getDoctors(req, res, next);
     
             expect(next).toHaveBeenCalledWith(expect.objectContaining({
                 message: "Both 'limit' and 'page' must be positive integers",
@@ -107,7 +107,7 @@ describe('doctorsControllers', () => {
             const mockError = new Error(`Failed to retrieve active doctors. Limit: ${limit}, Offset: ${offset}`);
             mockDbQueryError(mockError);
     
-            await getDoctors(req, res, next);
+            await dc.getDoctors(req, res, next);
             
             expect(next).toHaveBeenCalledWith(mockError);
             expect(res.json).not.toHaveBeenCalled();
@@ -120,7 +120,7 @@ describe('doctorsControllers', () => {
 
             mockDbQueryError(mockError);
     
-            await getDoctors(req, res, next);
+            await dc.getDoctors(req, res, next);
             
             expect(next).toHaveBeenCalledWith(mockError);
             expect(res.json).not.toHaveBeenCalled();
@@ -133,7 +133,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([mockResponse]) 
                 .mockResolvedValueOnce([[{ count: mockResponse.length }]]); 
 
-            await getAllDoctors(req, res, next);
+            await dc.getAllDoctors(req, res, next);
 
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
@@ -151,7 +151,7 @@ describe('doctorsControllers', () => {
         it('should throw an error if limit is not a positive integer', async () => {
             const req = { query: { limit: '0', page: '1' } };
 
-            await getAllDoctors(req, res, next);
+            await dc.getAllDoctors(req, res, next);
 
             expect(next).toHaveBeenCalledWith(expect.objectContaining({
                 message: "Limit and page must be positive integers",
@@ -163,7 +163,7 @@ describe('doctorsControllers', () => {
         it('should throw an error if page is not a positive integer', async () => {
             req.query = { page: '0', limit: '10' };
 
-            await getAllDoctors(req, res, next);
+            await dc.getAllDoctors(req, res, next);
 
             expect(next).toHaveBeenCalledWith(expect.objectContaining({
                 message: "Limit and page must be positive integers",
@@ -176,7 +176,7 @@ describe('doctorsControllers', () => {
             const mockError = new Error(`Failed to retrieve doctors. Limit: ${limit}, Offset: ${offset}`);
             mockDbQueryError(mockError);
     
-            await getAllDoctors(req, res, next);
+            await dc.getAllDoctors(req, res, next);
             
             expect(next).toHaveBeenCalledWith(mockError);
             expect(res.json).not.toHaveBeenCalled();
@@ -189,7 +189,7 @@ describe('doctorsControllers', () => {
 
             mockDbQueryError(mockError);
     
-            await getAllDoctors(req, res, next);
+            await dc.getAllDoctors(req, res, next);
             
             expect(next).toHaveBeenCalledWith(mockError);
             expect(res.json).not.toHaveBeenCalled();
@@ -208,7 +208,7 @@ describe('doctorsControllers', () => {
                 // Tercer mock: recuperar doctor recién creado (retorna el doctor creado)
                 .mockResolvedValueOnce([[mockResponse[0]]]); // También debe ser un arreglo anidado
         
-            await createDoctor(req, res, next);
+            await dc.createDoctor(req, res, next);
         
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.json).toHaveBeenCalledWith({
@@ -222,7 +222,7 @@ describe('doctorsControllers', () => {
         it('should throw an error if the doctor object is invalid or missing required fields', async () => {
             req.validData = null;
 
-            await createDoctor(req, res, next);
+            await dc.createDoctor(req, res, next);
 
             expect(next).toHaveBeenCalledWith(expect.objectContaining({
                 message: "Doctor object is invalid or missing required fields",
@@ -237,7 +237,7 @@ describe('doctorsControllers', () => {
             jest.spyOn(pool, 'query')
                 .mockResolvedValueOnce([[mockResponse[0]]]);
             
-            await createDoctor(req, res, next);
+            await dc.createDoctor(req, res, next);
             
             expect(next).toHaveBeenCalledWith({
                 message: "Doctor with this email or phone already exists",
@@ -253,7 +253,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([])
                 .mockResolvedValueOnce([{ insertId: null }]); 
         
-            await createDoctor(req, res, next);
+            await dc.createDoctor(req, res, next);
         
             expect(next).toHaveBeenCalledWith({
                 message: "Failed to create doctor: Unable to generate ID",
@@ -271,7 +271,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([{ insertId: mockResponse[0].id }])
                 .mockResolvedValueOnce([[]]); 
         
-            await createDoctor(req, res, next);
+            await dc.createDoctor(req, res, next);
         
             expect(next).toHaveBeenCalledWith({
                 message: "Failed to retrieve the newly created doctor from the database",
@@ -286,7 +286,7 @@ describe('doctorsControllers', () => {
         it('should return 400 if the doctor ID is missing', async () => {
             req.params.id = null;
     
-            await deactivateDoctor(req, res, next);
+            await dc.deactivateDoctor(req, res, next);
     
             expect(next).toHaveBeenCalledWith({
                 message: "Doctor ID must be a positive integer",
@@ -298,7 +298,7 @@ describe('doctorsControllers', () => {
             req.params.id = 1;
             mockDbQuery([null]);
     
-            await deactivateDoctor(req, res, next);
+            await dc.deactivateDoctor(req, res, next);
     
             expect(next).toHaveBeenCalledWith({
                 message: "Doctor not found",
@@ -315,7 +315,7 @@ describe('doctorsControllers', () => {
                 // deactivateDoctorById
                 .mockResolvedValueOnce([{ affectedRows: 0 }]);
         
-            await deactivateDoctor(req, res, next);
+            await dc.deactivateDoctor(req, res, next);
         
             expect(next).toHaveBeenCalledWith({
                 message: "Failed to deactivate doctor",
@@ -330,7 +330,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([[{ id: 1, is_active: true }]])
                 .mockResolvedValueOnce([{ affectedRows: 1 }]);
         
-            await deactivateDoctor(req, res, next);
+            await dc.deactivateDoctor(req, res, next);
         
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
@@ -349,7 +349,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([[{ id: 1, is_active: true }]])
                 .mockRejectedValueOnce(mockError);
         
-            await deactivateDoctor(req, res, next);
+            await dc.deactivateDoctor(req, res, next);
         
             expect(next).toHaveBeenCalledWith(
                 new Error(`Failed to update doctor status: ${mockError.message}`)
@@ -361,7 +361,7 @@ describe('doctorsControllers', () => {
         it('should return 400 if doctor ID is invalid', async () => {
             req.params.id = null;
     
-            await activateDoctor(req, res, next);
+            await dc.activateDoctor(req, res, next);
     
             expect(next).toHaveBeenCalledWith({
                 message: "Doctor ID must be a positive integer",
@@ -374,7 +374,7 @@ describe('doctorsControllers', () => {
     
             mockDbQuery([]);
     
-            await activateDoctor(req, res, next);
+            await dc.activateDoctor(req, res, next);
     
             expect(next).toHaveBeenCalledWith({
                 message: "Doctor not found",
@@ -389,7 +389,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([[{ id: 1, is_active: true }]]) 
                 .mockResolvedValueOnce([{ affectedRows: 0 }]);
     
-            await activateDoctor(req, res, next);
+            await dc.activateDoctor(req, res, next);
     
             expect(next).toHaveBeenCalledWith({
                 message: "Doctor not found or already active",
@@ -404,7 +404,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([[{ id: 1, is_active: false }]]) 
                 .mockResolvedValueOnce([{ affectedRows: 1 }]); 
     
-            await activateDoctor(req, res, next);
+            await dc.activateDoctor(req, res, next);
     
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
@@ -423,7 +423,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([[{ id: 1, is_active: false }]]) 
                 .mockRejectedValueOnce(mockError);
     
-            await activateDoctor(req, res, next);
+            await dc.activateDoctor(req, res, next);
     
             expect(next).toHaveBeenCalledWith(
                 new Error(`Failed to update doctor status: ${mockError.message}`));
@@ -434,7 +434,7 @@ describe('doctorsControllers', () => {
         it("should return 400 if doctor ID is invalid", async () => {
             req.params.id = null;
         
-            await updateDoctor(req, res, next);
+            await dc.updateDoctor(req, res, next);
         
             expect(next).toHaveBeenCalledWith({
                 message: "Doctor ID must be a positive integer",
@@ -447,7 +447,7 @@ describe('doctorsControllers', () => {
 
             mockDbQuery([]);
 
-            await updateDoctor(req, res, next);
+            await dc.updateDoctor(req, res, next);
 
             expect(pool.query).toHaveBeenCalledWith(
                 "SELECT * FROM doctors WHERE id = ?",
@@ -471,7 +471,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([[{ id: 1 }]])
                 .mockResolvedValueOnce([[{ id: 2 }]]);
 
-            await updateDoctor(req, res, next);
+            await dc.updateDoctor(req, res, next);
 
             expect(pool.query).toHaveBeenCalledWith(
                 "SELECT id FROM doctors WHERE (email = ? OR phone = ?) AND id != ?",
@@ -496,7 +496,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([[]])
                 .mockResolvedValueOnce([{ affectedRows: 0 }]);
         
-            await updateDoctor(req, res, next);
+            await dc.updateDoctor(req, res, next);
         
             expect(next).toHaveBeenCalledWith({
                 message: "Failed to update the doctor",
@@ -521,7 +521,7 @@ describe('doctorsControllers', () => {
                 .mockResolvedValueOnce([[]]) 
                 .mockResolvedValueOnce([{ affectedRows: 1 }]); 
 
-            await updateDoctor(req, res, next);
+            await dc.updateDoctor(req, res, next);
         
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
@@ -548,11 +548,73 @@ describe('doctorsControllers', () => {
         
             mockDbQueryError(new Error("Database connection failed"));
         
-            await updateDoctor(req, res, next);
+            await dc.updateDoctor(req, res, next);
         
             expect(next).toHaveBeenCalledWith(expect.any(Error));
         });        
     });
 
+    describe("deleteDoctor", () => {
+        it("should return 400 if ID is invalid", async () => {
+            req.params.id = "abc";
     
+            await dc.deleteDoctor(req, res, next);
+    
+            expect(next).toHaveBeenCalledWith({
+                message: "Doctor ID must be a positive integer",
+                status: 400,
+            });
+        });
+
+        it("should return 404 if the doctor does not exist", async () => {
+            req.params.id = 999;
+        
+            mockDbQuery([null]);
+        
+            await dc.deleteDoctor(req, res, next);
+        
+            expect(next).toHaveBeenCalledWith({
+                message: "Doctor not found",
+                status: 404,
+            });
+        });
+        
+        it("should return 500 if deleting the doctor fails", async () => {
+            req.params.id = 3;
+            
+            jest.spyOn(pool, "query")
+                .mockResolvedValueOnce([[{ id: 3 }]])
+                .mockResolvedValueOnce([{ affectedRows: 0 }]);
+
+            await dc.deleteDoctor(req, res, next);
+        
+            expect(next).toHaveBeenCalledWith({
+                message: "Failed to delete the doctor",
+                status: 500,
+            });
+        });
+        
+        it("should return 200 and success message when deletion is successful", async () => {
+            req.params.id = 5;
+            
+            jest.spyOn(pool, "query")
+                .mockResolvedValueOnce([[{ id: 5 }]])
+                .mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+            await dc.deleteDoctor(req, res, next);
+        
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: "Doctor deleted successfully" });
+        });        
+
+        it("should pass unexpected errors to next", async () => {
+            req.params.id = 4;
+        
+            mockDbQueryError(new Error("Database error"));
+        
+            await dc.deleteDoctor(req, res, next);
+        
+            expect(next).toHaveBeenCalledWith(expect.any(Error));
+        });
+    });
 });
