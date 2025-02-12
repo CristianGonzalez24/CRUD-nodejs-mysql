@@ -14,17 +14,10 @@ if (!process.env.NODE_ENV || !PORT) {
     throw new Error('Environment variables not configured properly.');
 }
 const app = express();
-const noCache = (req, res, next) => {
-    res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-    res.header('Expires', '-1');
-    res.header('Pragma', 'no-cache');
-    next();
-};
 
 // Middlewares
 app.use(express.json());
 app.use(helmet());
-app.use(noCache);
 app.use(compression({ level: 6 }));
 app.use(limiter);
 app.use(cors(corsOptions));

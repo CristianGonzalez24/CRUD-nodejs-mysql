@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 import request from "supertest";
+import { clearCache } from '../middlewares/cache.js';
 
 jest.unstable_mockModule("../controllers/doctors.controller.js", () => ({
     getDoctors: jest.fn((req, res) => res.status(200).json([{ id: 1, first_name: "John", last_name: "Doe" }])),
@@ -17,6 +18,7 @@ const { default: app } = await import("../__mocks__/mockApp.js");
 describe("Doctors routes", () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        clearCache();
     });
 
     afterAll(() => {
