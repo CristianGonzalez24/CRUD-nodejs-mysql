@@ -1,42 +1,58 @@
+import logger from '../config/logger.js';
 import { pool } from "../config/db.js";
 
 export const getActiveDoctors = async (limit, offset) => {
     try {
-      const [rows] = await pool.query(
-        `SELECT * FROM doctors WHERE is_active = TRUE LIMIT ? OFFSET ?`,
-        [limit, offset]
-      );
-      return rows;
+        logger.info(`Fetching active doctors. Limit: ${limit}, Offset: ${offset}`);
+
+        const [rows] = await pool.query(
+            `SELECT * FROM doctors WHERE is_active = TRUE LIMIT ? OFFSET ?`,
+            [limit, offset]
+        );
+
+        logger.info(`Retrieved ${rows.length} active doctors`);
+        return rows;
     } catch (error) {
-      throw new Error(`Failed to retrieve active doctors. Limit: ${limit}, Offset: ${offset}`);
+        logger.error(`Failed to retrieve active doctors. Limit: ${limit}, Offset: ${offset}. Error: ${error.message}`);
+        throw new Error("Database query failed while fetching active doctors");
     }
 };
 
 export const countActiveDoctors = async () => {
     try {
-      const [result] = await pool.query(
-        `SELECT COUNT(*) AS count FROM doctors WHERE is_active = TRUE`
-      );
-  
-      if (!result?.[0]?.count && result?.[0]?.count !== 0) {
-        throw new Error("Unexpected result format from database");
-      }
-  
-      return result[0].count || 0;
+        logger.info("Counting active doctors...");
+
+        const [result] = await pool.query(
+            `SELECT COUNT(*) AS count FROM doctors WHERE is_active = TRUE`
+        );
+
+        if (!result?.[0]?.count && result?.[0]?.count !== 0) {
+            logger.error("Unexpected result format while counting active doctors");
+            throw new Error("Unexpected result format from database");
+        }
+
+        logger.info(`Total active doctors: ${result[0].count}`);
+        return result[0].count || 0;
     } catch (error) {
-      throw new Error("Failed to count active doctors");
+        logger.error(`Failed to count active doctors. Error: ${error.message}`);
+        throw new Error("Database query failed while counting active doctors");
     }
 };
 
 export const getAllDoctorsFromDB = async (limit, offset) => {
     try {
-      const [rows] = await pool.query(
-        `SELECT * FROM doctors LIMIT ? OFFSET ?`,
-        [limit, offset]
-      );
-      return rows;
+        logger.info(`Fetching all doctors. Limit: ${limit}, Offset: ${offset}`);
+
+        const [rows] = await pool.query(
+            `SELECT * FROM doctors LIMIT ? OFFSET ?`,
+            [limit, offset]
+        );
+
+        logger.info(`Successfully retrieved ${rows.length} doctors.`);
+        return rows;
     } catch (error) {
-      throw new Error(`Failed to retrieve doctors. Limit: ${limit}, Offset: ${offset}`);
+        logger.error(`Failed to retrieve doctors. Limit: ${limit}, Offset: ${offset}. Error: ${error.message}`);
+        throw new Error("Database query failed while fetching doctors");
     }
 };
 

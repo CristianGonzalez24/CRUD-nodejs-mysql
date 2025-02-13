@@ -6,7 +6,8 @@ import cors from 'cors';
 import { corsOptions } from './config/corsOptions.js';
 import doctorsRoutes from './routes/doctors.routes.js'
 import { errorHandler } from './middlewares/errorHandler.js';
-import { PORT } from './config/config.js'
+import { PORT } from './config/config.js';
+import logger from './config/logger.js';
 
 process.loadEnvFile();
 
@@ -21,7 +22,10 @@ app.use(helmet());
 app.use(compression({ level: 6 }));
 app.use(limiter);
 app.use(cors(corsOptions));
-
+app.use((req, res, next) => {
+    logger.info(`${req.method} ${req.url}`);
+    next();
+});
 // Routes
 app.use('/api', doctorsRoutes);
 
