@@ -58,44 +58,57 @@ export const getAllDoctorsFromDB = async (limit, offset) => {
 
 export const countAllDoctors = async () => {
     try {
-      const [result] = await pool.query(
-        `SELECT COUNT(*) AS count FROM doctors`
-      );
+        logger.info("Counting all doctors in the database.");
 
-      if (!result?.[0]?.count && result?.[0]?.count !== 0) {
-        throw new Error("Unexpected result structure: count is missing");
-      }
+        const [result] = await pool.query(
+            `SELECT COUNT(*) AS count FROM doctors`
+        );
 
-      return result?.[0]?.count || 0;
+        if (!result?.[0]?.count && result?.[0]?.count !== 0) {
+            logger.error("Unexpected result structure: count is missing.");
+            throw new Error("Unexpected result structure: count is missing");
+        }
+
+        logger.info(`Total doctors count: ${result[0].count}`);
+        return result[0].count || 0;
     } catch (error) {
-      throw new Error("Failed to count doctors in the database");
+        logger.error(`Failed to count doctors. Error: ${error.message}`);
+        throw new Error("Failed to count doctors in the database");
     }
 };
 
 export const findDoctorByEmailOrPhone = async (email, phone) => {
     if (!email && !phone) {
+        logger.warn("Both email and phone are missing in findDoctorByEmailOrPhone.");
         throw new Error("Both email and phone are missing in findDoctorByEmailOrPhone");
     }
 
     try {
+        logger.info(`Searching for doctor with Email: ${email || "N/A"}, Phone: ${phone || "N/A"}`);
+
         const query = `
             SELECT * FROM doctors 
             WHERE (email = ? OR phone = ?) AND is_active = TRUE
         `;
         const [rows = []] = await pool.query(query, [email || null, phone || null]);
-        
+
         if (!Array.isArray(rows)) {
+            logger.error("Unexpected response format from database.");
             throw new Error("Unexpected response format from database.");
         }
 
+        logger.info(`Found ${rows.length} doctor(s) matching criteria.`);
         return rows;
     } catch (error) {
-        throw new Error('Database query failed in findDoctorByEmailOrPhone');
+        logger.error(`Database query failed in findDoctorByEmailOrPhone. Error: ${error.message}`);
+        throw new Error("Database query failed in findDoctorByEmailOrPhone");
     }
 };
 
 export const createDoctorInDB = async (doctor) => {
     try {
+        logger.info(`Creating new doctor: ${JSON.stringify(doctor)}`);
+
         const [result] = await pool.query(
             `INSERT INTO doctors (first_name, last_name, specialty, phone, email, years_of_experience, is_active)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -111,89 +124,128 @@ export const createDoctorInDB = async (doctor) => {
         );
 
         if (!result.insertId) {
+            logger.error("Failed to create doctor: insertId is null.");
             return null;
         }
-        
+
+        logger.info(`Doctor created successfully with ID: ${result.insertId}`);
         return result.insertId;
     } catch (error) {
+        logger.error(`Database query failed in createDoctorInDB. Error: ${error.message}`);
         throw new Error("Database query failed in createDoctorInDB");
     }
 };
 
 export const getDoctorById = async (id) => {
     if (!id) {
+        logger.warn("Doctor ID is required but was not provided.");
         throw new Error("Doctor ID is required");
     }
 
     try {
+        logger.info(`Fetching doctor with ID: ${id}`);
+
         const [rows] = await pool.query('SELECT * FROM doctors WHERE id = ?', [id]);
 
         if (!rows || !Array.isArray(rows)) {
+            logger.error("Unexpected database response format for getDoctorById.");
             throw new Error("Unexpected database response format");
         }
 
-        return rows[0] || null;
+        const doctor = rows[0] || null;
+
+        if (!doctor) {
+            logger.warn(`Doctor with ID ${id} not found.`);
+        } else {
+            logger.info(`Doctor found: ${JSON.stringify(doctor)}`);
+        }
+
+        return doctor;
     } catch (error) {
+        logger.error(`Failed to retrieve doctor by ID ${id}. Error: ${error.message}`);
         throw new Error(`Failed to retrieve doctor by ID: ${error.message}`);
     }
 };
 
 export const deactivateDoctorById = async (id) => {
     try {
+        logger.info(`Attempting to deactivate doctor with ID: ${id}`);
+
         const [result] = await pool.query(
             `UPDATE doctors SET is_active = FALSE WHERE id = ? AND is_active = TRUE`,
             [id]
         );
-        return result.affectedRows > 0;
+
+        if (result.affectedRows > 0) {
+            logger.info(`Doctor with ID ${id} successfully deactivated.`);
+            return true;
+        } else {
+            logger.warn(`Doctor with ID ${id} was not deactivated (possibly already inactive or not found).`);
+            return false;
+        }
     } catch (error) {
+        logger.error(`Failed to deactivate doctor with ID ${id}. Error: ${error.message}`);
         throw new Error("Failed to update doctor status: " + error.message);
     }
 };
 
-
 export const activateDoctorById = async (id) => {
     try {
+        logger.info(`Attempting to activate doctor with ID: ${id}`);
+
         const [result] = await pool.query(
             `UPDATE doctors SET is_active = TRUE WHERE id = ? AND is_active = FALSE`,
             [id]
         );
 
-        return result.affectedRows > 0;
+        if (result.affectedRows > 0) {
+            logger.info(`Doctor with ID ${id} successfully activated.`);
+            return true;
+        } else {
+            logger.warn(`Doctor with ID ${id} was not activated (possibly already active or not found).`);
+            return false;
+        }
     } catch (error) {
+        logger.error(`Failed to activate doctor with ID ${id}. Error: ${error.message}`);
         throw new Error(`Failed to update doctor status: ${error.message}`);
     }
 };
 
 export const checkDuplicateDoctor = async (email, phone, id) => {
-
     if (!email && !phone) {
-        throw new Error("Both email and phone are missing in checkDuplicateDoctor");
+        const errorMsg = "Both email and phone are missing in checkDuplicateDoctor";
+        logger.error(errorMsg);
+        throw new Error(errorMsg);
     }
+
     try {
+        logger.info(`Checking for duplicate doctor with email: ${email}, phone: ${phone}, excluding ID: ${id}`);
+
         const [rows] = await pool.query(
             "SELECT id FROM doctors WHERE (email = ? OR phone = ?) AND id != ?",
             [email, phone, id]
         );
 
-        return rows.length > 0;
+        if (rows.length > 0) {
+            logger.warn(`Duplicate doctor found for email: ${email} or phone: ${phone}`);
+            return true;
+        }
+
+        logger.info("No duplicate doctor found.");
+        return false;
     } catch (error) {
+        logger.error(`Database query failed in checkDuplicateDoctor. Error: ${error.message}`);
         throw new Error("Database query failed in checkDuplicateDoctor");
     }
 };
 
 export const updateDoctorById = async (
     id,
-    {
-        first_name,
-        last_name,
-        specialty,
-        phone,
-        email,
-        years_of_experience,
-        is_active,
-    }
+    { first_name, last_name, specialty, phone, email, years_of_experience, is_active }
 ) => {
     try {
+        logger.info(`Updating doctor with ID: ${id}`);
+
         const [result] = await pool.query(
             `UPDATE doctors SET 
                 first_name = COALESCE(?, first_name),
@@ -204,33 +256,49 @@ export const updateDoctorById = async (
                 years_of_experience = COALESCE(?, years_of_experience),
                 is_active = COALESCE(?, is_active)
             WHERE id = ?`,
-        [
-            first_name,
-            last_name,
-            specialty,
-            phone,
-            email,
-            years_of_experience,
-            is_active,
-            id,
-        ]);
-        // console.log("Resultado de updateDoctorById:", result);
+            [
+                first_name,
+                last_name,
+                specialty,
+                phone,
+                email,
+                years_of_experience,
+                is_active,
+                id,
+            ]
+        );
 
-        return result.affectedRows > 0;
+        if (result.affectedRows > 0) {
+            logger.info(`Doctor with ID: ${id} updated successfully.`);
+            return true;
+        } else {
+            logger.warn(`No changes were made for doctor with ID: ${id}`);
+            return false;
+        }
     } catch (error) {
+        logger.error(`Failed to update doctor with ID: ${id || "Unknown ID"}. Error: ${error.message}`);
         throw new Error(`Failed to update doctor: ${error.message}`);
     }
 };
 
 export const deleteDoctorById = async (id) => {
     try {
+        logger.info(`Attempting to delete doctor with ID: ${id}`);
+
         const [result] = await pool.query(
             "DELETE FROM doctors WHERE id = ?",
             [id]
         );
 
-        return result.affectedRows > 0 ? result : null;
+        if (result.affectedRows > 0) {
+            logger.info(`Doctor with ID: ${id} deleted successfully.`);
+            return result;
+        } else {
+            logger.warn(`No doctor found with ID: ${id}, deletion not performed.`);
+            return null;
+        }
     } catch (error) {
+        logger.error(`Failed to delete doctor with ID: ${id || "Unknown ID"}. Error: ${error.message}`);
         throw new Error(`Failed to delete doctor: ${error.message}`);
     }
 };

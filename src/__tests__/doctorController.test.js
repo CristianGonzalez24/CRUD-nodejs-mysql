@@ -104,7 +104,7 @@ describe('doctorsControllers', () => {
         });
 
         it('should handle errors thrown during getActiveDoctors', async () => {
-            const mockError = new Error(`Failed to retrieve active doctors. Limit: ${limit}, Offset: ${offset}`);
+            const mockError = new Error('Database query failed while fetching active doctors');
             mockDbQueryError(mockError);
     
             await dc.getDoctors(req, res, next);
@@ -114,7 +114,7 @@ describe('doctorsControllers', () => {
         });
 
         it('should handle errors thrown during countActiveDoctors', async () => {
-            const mockError = new Error('Failed to count active doctors');
+            const mockError = new Error('Database query failed while counting active doctors');
             jest.spyOn(pool, 'query')
                 .mockResolvedValueOnce([mockResponse])
 
@@ -173,7 +173,7 @@ describe('doctorsControllers', () => {
         });
 
         it('should handle errors thrown during getAllDoctorsFromDB', async () => {
-            const mockError = new Error(`Failed to retrieve doctors. Limit: ${limit}, Offset: ${offset}`);
+            const mockError = new Error('Database query failed while fetching doctors');
             mockDbQueryError(mockError);
     
             await dc.getAllDoctors(req, res, next);

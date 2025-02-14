@@ -284,7 +284,7 @@ export const updateDoctor = async (req, res, next) => {
       },
     });
   } catch (error) {
-    logger.error(`Error updating doctor with ID ${id}: ${error.message}`);
+    logger.error(`Failed to update doctor. Error: ${error.message}`);
     next(error);
   }
 };
@@ -325,7 +325,7 @@ export const deleteDoctor = async (req, res, next) => {
       message: "Doctor deleted successfully",
     });
   } catch (error) {
-    logger.error(`Error deleting doctor with ID ${id}: ${error.message}`);
+    logger.error(`Failed to delete doctor. Error: ${error.message}`);
     next(error);
   }
 };

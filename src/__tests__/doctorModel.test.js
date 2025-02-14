@@ -65,7 +65,7 @@ describe('doctorsModels', () => {
             mockDbQueryError(mockError);
         
             await expect(dm.getActiveDoctors(limit, offset)).rejects.toThrow(
-                `Failed to retrieve active doctors. Limit: ${limit}, Offset: ${offset}`
+                'Database query failed while fetching active doctors'
             );
         });
     });
@@ -90,7 +90,7 @@ describe('doctorsModels', () => {
         });
 
         it('should throw an error if the query fails', async () => {
-            const mockError = new Error("Failed to count active doctors");
+            const mockError = new Error("Database query failed while counting active doctors");
             mockDbQueryError(mockError);
 
             await expect(dm.countActiveDoctors()).rejects.toThrow(mockError);
@@ -119,7 +119,7 @@ describe('doctorsModels', () => {
             mockDbQueryError(mockError);
         
             await expect(dm.getAllDoctorsFromDB(limit, offset)).rejects.toThrow(
-                `Failed to retrieve doctors. Limit: ${limit}, Offset: ${offset}`
+                'Database query failed while fetching doctors'
             );
         });
     });
