@@ -12,6 +12,7 @@ import logger from './config/logger.js';
 process.loadEnvFile();
 
 if (!process.env.NODE_ENV || !PORT) {
+    logger.error('Environment variables not configured properly.');
     throw new Error('Environment variables not configured properly.');
 }
 const app = express();
