@@ -18,15 +18,17 @@ This is a RESTful API built with **Node.js, Express, and MySQL**, designed to ma
 ```
 /project-root
 │-- backend/
+│   ├── __mocks__/
+│   ├── __tests__/
+│   ├── config/
 │   ├── controllers/
+│   ├── database/
+│   ├── docs/ (Swagger API documentation)
 │   ├── middlewares/
 │   ├── models/
 │   ├── routes/
-│   ├── tests/
-│   ├── utils/
-│   ├── app.js
-│   ├── server.js
-│   └── swagger.json
+│   ├── validators/
+│   └── app.js
 │
 │-- frontend/ (React + Vite)
 │   ├── src/
@@ -34,7 +36,6 @@ This is a RESTful API built with **Node.js, Express, and MySQL**, designed to ma
 │   ├── index.html
 │   └── vite.config.js
 │
-│-- docs/ (Swagger API documentation)
 │-- .env.example
 │-- package.json
 │-- README.md
@@ -43,8 +44,8 @@ This is a RESTful API built with **Node.js, Express, and MySQL**, designed to ma
 ## 🔧 Installation & Setup
 ### 1️⃣ Clone the repository
 ```sh
-git clone https://github.com/your-username/hospital-api.git
-cd hospital-api
+git clone https://github.com/CristianGonzalez24/CRUD-nodejs-mysql.git
+cd CRUD-nodejs-mysql
 ```
 
 ### 2️⃣ Install dependencies
@@ -69,7 +70,7 @@ By default, the API will run at `http://localhost:3000`
 
 ### 5️⃣ Start the frontend (React + Vite)
 ```sh
-cd frontend
+cd client
 npm install
 npm run dev
 ```
@@ -96,10 +97,10 @@ To run unit and integration tests:
 ```sh
 npm test
 ```
-Jest is used for testing models, controllers, and middlewares.
+Jest is used for testing models, controllers, routes and middlewares.
 
 ## 📸 Screenshots
-> (To be added once the frontend is completed)
+> 
 
 ## 🎯 Future Improvements
 - Implement user authentication and authorization
