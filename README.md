@@ -1,4 +1,4 @@
-# Hospital API - Backend
+# Hospital API
 
 ## 📌 Project Overview
 This is a RESTful API built with **Node.js, Express, and MySQL**, designed to manage a hospital's doctors. The API provides endpoints to **create, update, delete, activate, and deactivate doctors**, as well as retrieve lists of active and inactive doctors. The project follows a structured and scalable architecture, using **Zod for validation**, **Jest for testing**, and **Swagger for documentation**.
