@@ -8,6 +8,7 @@ import doctorsRoutes from './routes/doctors.routes.js'
 import { errorHandler } from './middlewares/errorHandler.js';
 import { PORT } from './config/config.js';
 import logger from './config/logger.js';
+import setupSwagger from './config/swagger.js';
 
 process.loadEnvFile();
 
@@ -16,6 +17,7 @@ if (!process.env.NODE_ENV || !PORT) {
     throw new Error('Environment variables not configured properly.');
 }
 const app = express();
+setupSwagger(app);
 
 // Middlewares
 app.use(express.json());

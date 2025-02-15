@@ -12,7 +12,7 @@ const combinedTransport = new winston.transports.DailyRotateFile({
     filename: 'logs/application-%DATE%.log',
     datePattern: 'YYYY-MM-DD',
     zippedArchive: true,  
-    maxSize: '10m',       // Máximo 10MB por archivo antes de rotar
+    maxSize: '10m',
     maxFiles: '14d',      
     level: 'info',
 });
@@ -22,7 +22,7 @@ const errorTransport = new winston.transports.DailyRotateFile({
     datePattern: 'YYYY-MM-DD',
     zippedArchive: true,  
     maxSize: '5m',
-    maxFiles: '30d',      // Mantener logs de errores por 30 días
+    maxFiles: '30d',
     level: 'error',
 });
 
