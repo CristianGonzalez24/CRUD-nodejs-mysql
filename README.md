@@ -99,7 +99,7 @@ npm test
 ```
 Jest is used for testing models, controllers, routes and middlewares.
 
-## 📸 Screenshots
+## 🖼️ Screenshots
 > 
 
 ## 🎯 Future Improvements
