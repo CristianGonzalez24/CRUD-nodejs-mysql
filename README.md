@@ -108,7 +108,7 @@ npm run dev
 ```
 By default, the frontend will run at `http://localhost:5173`
 
-## 🛠 API Endpoints
+## 🐝 API Endpoints
 All routes follow RESTful conventions.
 
 ### **🔹 Doctors Routes**
