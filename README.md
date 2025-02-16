@@ -42,6 +42,7 @@ This is a RESTful API built with **Node.js, Express, and MySQL**, designed to ma
 ```
 
 ## 🔧 Installation & Setup
+
 ### 1️⃣ Clone the repository
 ```sh
 git clone https://github.com/CristianGonzalez24/CRUD-nodejs-mysql.git
@@ -58,21 +59,38 @@ npm install
 ---
 
 ### 3️⃣ Set up the database (MySQL)
-Before running the project, you need to create and set up the database:
+Before running the project, you need to create and set up the database.
 
-#### ➤ **Create the database**
-If you haven’t created the database yet, you can do it manually in **MySQL Workbench** or run the following SQL command:
-```sql
+#### ➤ **Option 1: Using MySQL Workbench**
+1. Open **MySQL Workbench** and connect to your MySQL server.
+2. In the **Navigator panel**, click on the **Schemas** tab.
+3. Click on **Create Schema**, enter `hospital_db` as the database name, and apply the changes.
+4. To import the database structure:
+   - Click on **File > Run SQL Script**.
+   - Select the file **`query.sql`** located in the project.
+   - Execute the script to create the necessary tables.
+
+#### ➤ **Option 2: Using the Terminal**
+If you prefer using the terminal, follow these steps:
+
+1. Open a terminal and connect to MySQL:
+```sh
+mysql -u root -p
+```
+2. Create the database:
+```sh
 CREATE DATABASE hospital_db;
 ```
-*(You can replace `hospital_db` with another name, but make sure to update it in the `.env` file.)*
-
-#### ➤ **Import the database structure**
-To ensure the database has the required tables and structure, run the provided SQL script:
-1. Open **MySQL Workbench** (or another MySQL client).
-2. Select your database (`hospital_db`).
-3. Click on **File > Run SQL Script** and select `query.sql`.
-4. Execute the script to create the necessary tables.
+(You can replace hospital_db with another name, but make sure to update it in the .env file.)
+3. Use the new database:
+```sh
+USE hospital_db;
+```
+4. Import the structure from the provided SQL script:
+```sh
+mysql -u root -p hospital_db < query.sql
+```
+Once the database is set up, you can proceed with running the backend.
 
 ---
 
@@ -80,13 +98,15 @@ To ensure the database has the required tables and structure, run the provided S
 Create a `.env` file in the root directory and add the following environment variables:
 ```sh
 NODE_ENV=development
+FRONTEND_URL=url_vite
+PRODUCTION_URL=https://mi-app.com
+PORT=port_nodejs
+LOG_LEVEL=info
 DB_HOST=localhost
+DB_PORT=port_mysql
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=hospital_db
-FRONTEND_URL=http://localhost:5173
-PRODUCTION_URL=https://mi-app.com
-LOG_LEVEL=info
 ```
 *(Replace `your_password` with your actual MySQL password.)*
 
