@@ -48,27 +48,59 @@ git clone https://github.com/CristianGonzalez24/CRUD-nodejs-mysql.git
 cd CRUD-nodejs-mysql
 ```
 
+---
+
 ### 2️⃣ Install dependencies
 ```sh
 npm install
 ```
 
-### 3️⃣ Set up the `.env` file
+---
+
+### 3️⃣ Set up the database (MySQL)
+Before running the project, you need to create and set up the database:
+
+#### ➤ **Create the database**
+If you haven’t created the database yet, you can do it manually in **MySQL Workbench** or run the following SQL command:
+```sql
+CREATE DATABASE hospital_db;
+```
+*(You can replace `hospital_db` with another name, but make sure to update it in the `.env` file.)*
+
+#### ➤ **Import the database structure**
+To ensure the database has the required tables and structure, run the provided SQL script:
+1. Open **MySQL Workbench** (or another MySQL client).
+2. Select your database (`hospital_db`).
+3. Click on **File > Run SQL Script** and select `query.sql`.
+4. Execute the script to create the necessary tables.
+
+---
+
+### 4️⃣ Set up the `.env` file
 Create a `.env` file in the root directory and add the following environment variables:
 ```sh
 NODE_ENV=development
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=hospital_db
 FRONTEND_URL=http://localhost:5173
 PRODUCTION_URL=https://mi-app.com
 LOG_LEVEL=info
 ```
+*(Replace `your_password` with your actual MySQL password.)*
 
-### 4️⃣ Start the backend server
+---
+
+### 5️⃣ Start the backend server
 ```sh
 npm start
 ```
 By default, the API will run at `http://localhost:3000`
 
-### 5️⃣ Start the frontend (React + Vite)
+---
+
+### 6️⃣ Start the frontend (React + Vite)
 ```sh
 cd client
 npm install
