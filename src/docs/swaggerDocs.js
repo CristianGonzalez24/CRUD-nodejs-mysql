@@ -202,6 +202,17 @@ export const doctorDocs = {
         },
         500: {
           description: "Internal server error",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  message: { type: "string", example: "Internal server error" },
+                  status: { type: "integer", example: 500 },
+                },
+              },
+            },
+          }
         },
       },
     },
@@ -535,4 +546,3 @@ export const doctorDocs = {
     },
   },
 };
-
