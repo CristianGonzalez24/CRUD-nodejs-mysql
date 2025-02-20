@@ -1,4 +1,4 @@
-:root {
+/* :root {
     --color-primary: #2563eb;
     --color-primary-dark: #1d4ed8;
     --color-secondary: #64748b;
@@ -14,6 +14,13 @@
     --color-gray-900: #0f172a;
     --color-red-600: #dc2626;
     --color-red-700: #b91c1c;
+} */
+:root {
+    --primary-color: #2563eb;
+    --danger-color: #dc3545;
+    --text-color: #333333;
+    --bg-light: #f8f9fa;
+    --border-color: #dee2e6;
 }
 
 * {
@@ -24,8 +31,8 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.5;
-    color: var(--color-gray-800);
+    line-height: 1.6;
+    color: var(--text-color);
 }
 
 /* Container Styles */
@@ -45,19 +52,28 @@ body {
     border-radius: 0.375rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
     border: none;
     gap: 0.5rem;
 }
 
 .btn-primary {
-    background-color: var(--color-primary);
-    color: var(--color-white);
+    background-color: var(--primary-color);
+    color: white;
 }
 
 .btn-primary:hover {
-    background-color: var(--color-primary-dark);
+    background-color: #0052a3;
 }
+
+/* .btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #bd2130;
+} */
 
 /* Media Queries */
 @media screen and (max-width: 768px) {
@@ -69,8 +85,7 @@ body {
         display: block;
         background: none;
         border: none;
-        color: var(--color-gray-600);
-        cursor: pointer;
+        color: #475569;
     }
 
     .navbar-menu{
@@ -78,22 +93,22 @@ body {
         flex-direction: column;
         align-items: center;
         position: absolute;
-        top: 4rem;
+        top: 100%;
         left: 0;
         right: 0;
-        background-color: var(--color-white);
+        background: white;
         padding: 1rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .navbar-menu a {
-        display: block;
-        padding: 0.6rem 0.75rem;
-        color: var(--color-gray-600);
+        padding: 0.75rem 1rem;
+        color: var(--text-color);
         text-decoration: none;
+        font-weight: 500;
     }
 
-    .btn-mobile{
-        width: 100%;
+    .newsletter-form {
+        flex-direction: column;
     }
 }

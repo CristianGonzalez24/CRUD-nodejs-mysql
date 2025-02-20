@@ -35,7 +35,7 @@ const Navbar = () => {
                     <a href="#services">Services</a>
                     <a href="#doctors">Doctors</a>
                     <a href="#contact">Contact</a>
-                    <button className="btn btn-primary btn-mobile">Book Appointment</button>
+                    <button className="btn btn-primary">Book Appointment</button>
                 </div>
                 )}
             </div>
