@@ -112,4 +112,10 @@ body {
     .hero-title {
         font-size: 2rem;
     }
+    .section-title {
+        font-size: 2rem;
+    }
+    .services-grid{
+        grid-template-columns: 1fr;
+    }
 }
