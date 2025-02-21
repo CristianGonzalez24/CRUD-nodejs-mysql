@@ -3,6 +3,7 @@ import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
 import HeroSection from './components/HeroSection/HeroSection';
 import ServicesSection from './components/ServicesSection/ServicesSection';
+import DoctorSection from './components/DoctorSection/DoctorSection';
 
 function App() {
 
@@ -11,6 +12,7 @@ function App() {
       <Navbar />
       <HeroSection />
       <ServicesSection />
+      <DoctorSection />
       <Footer />
     </>
   )

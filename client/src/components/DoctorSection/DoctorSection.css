@@ -1,0 +1,36 @@
+.doctors {
+    padding: 5rem 0;
+}
+.doctors-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+.doctor-card{
+    background: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.doctor-image{
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+}
+.doctor-info{
+    padding: 1.5rem;
+}
+.doctor-name{
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+.doctor-specialization{
+    color: var(--primary-color);
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+.doctor-bio{
+    color: #666666;
+    margin-bottom: 1.5rem;
+}
