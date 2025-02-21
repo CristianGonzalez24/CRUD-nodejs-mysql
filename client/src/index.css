@@ -98,7 +98,7 @@ body {
     .section-title {
         font-size: 2rem;
     }
-    .services-grid, .doctors-grid{
+    .services-grid{
         grid-template-columns: 1fr;
     }
 }

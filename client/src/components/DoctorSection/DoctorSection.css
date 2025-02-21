@@ -1,17 +1,19 @@
 .doctors {
     padding: 5rem 0;
 }
-.doctors-grid{
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-bottom: 2rem;
+.doctors-carousel{
+    margin-bottom: 4rem;
+    padding: 0 1rem;
+}
+.doctor-slide{
+    padding: 0 1rem;
 }
 .doctor-card{
     background: white;
     border-radius: 0.5rem;
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    height: 100%;
 }
 .doctor-image{
     width: 100%;
@@ -33,4 +35,11 @@
 .doctor-bio{
     color: #666666;
     margin-bottom: 1.5rem;
+}
+.doctors-footer{
+    text-align: center;
+}
+.view-all-btn {
+    font-size: 1.125rem;
+    padding: 1rem 2rem;
 }
