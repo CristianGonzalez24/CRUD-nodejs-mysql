@@ -1,4 +1,3 @@
-import React from 'react'
 import { Stethoscope, Heart, Brain, Eye, Laugh, BriefcaseMedical, ArrowRight } from 'lucide-react';
 import './ServicesSection.css'
 

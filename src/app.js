@@ -1,3 +1,4 @@
+import { loadEnvFile } from 'node:process';
 import express from 'express'
 import helmet from 'helmet';
 import compression from "compression";
@@ -10,7 +11,7 @@ import { PORT } from './config/config.js';
 import logger from './config/logger.js';
 import setupSwagger from './config/swagger.js';
 
-process.loadEnvFile();
+loadEnvFile();
 
 if (!process.env.NODE_ENV || !PORT) {
     logger.error('Environment variables not configured properly.');

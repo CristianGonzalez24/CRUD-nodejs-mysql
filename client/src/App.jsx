@@ -1,18 +1,15 @@
-import React from 'react';
+import { Routes, Route } from "react-router";
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
-import HeroSection from './components/HeroSection/HeroSection';
-import ServicesSection from './components/ServicesSection/ServicesSection';
-import DoctorSection from './components/DoctorSection/DoctorSection';
+import HomePage from './pages/HomePage';
 
 function App() {
-
   return (
     <>
       <Navbar />
-      <HeroSection />
-      <ServicesSection />
-      <DoctorSection />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+      </Routes>
       <Footer />
     </>
   )

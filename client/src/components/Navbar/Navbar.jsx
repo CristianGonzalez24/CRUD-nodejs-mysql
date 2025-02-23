@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Link } from "react-router";
 import { Menu, X, Stethoscope } from 'lucide-react';
 import './navbar.css'
 
@@ -8,10 +9,10 @@ const Navbar = () => {
     return (
         <nav className="navbar">
             <div className="container navbar-container">
-                <a href="#" className="navbar-brand">
+                <Link to="/" className="navbar-brand">
                     <Stethoscope />
                     <span>MediCare</span>
-                </a>
+                </Link>
 
                 <button
                 className="mobile-menu-btn"

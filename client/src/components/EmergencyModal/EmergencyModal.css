@@ -1,0 +1,121 @@
+.emergency-modal-overlay{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+    padding: 1rem;
+}
+.emergency-modal{
+    background: white;
+    border-radius: 0.5rem;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    padding: 2rem;
+}
+.emergency-close-btn{
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+.emergency-close-btn:hover{
+    background-color: #f0f0f0;
+}
+.emergency-header{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    color: var(--danger-color);
+}
+.emergency-header h2{
+    font-size: 1.75rem;
+    margin: 0;
+}
+.emergency-content{
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+.emergency-section h3{
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+.emergency-numbers{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.emergency-contact-item{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-light);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+.emergency-contact-item:hover{
+    transform: translateY(-2px);
+    background-color: #f0f0f0;
+}
+.contact-label{
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+.contact-number{
+    color: var(--danger-color);
+    font-weight: 600;
+}
+.nearby-hospitals{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.hospital-item{
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-light);
+    border-radius: 0.5rem;
+}
+.hospital-item h4{
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+.hospital-item p{
+    margin-bottom: 0.25rem;
+    color: #666666;
+}
+.hospital-distance{
+    color: var(--primary-color) !important;
+    font-weight: 500;
+}
+.hospital-item a{
+    color: var(--danger-color);
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-block;
+    margin-top: 0.5rem;
+}

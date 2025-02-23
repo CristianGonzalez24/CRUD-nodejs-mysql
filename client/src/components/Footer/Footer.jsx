@@ -1,4 +1,3 @@
-import React from 'react'
 import { Facebook, Twitter, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import './Footer.css'
 
@@ -32,9 +31,9 @@ const Footer = () => {
                     <div className="footer-section">
                         <h3>Quick Links</h3>
                         <ul className="footer-links">
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Our Services</a></li>
-                        <li><a href="#">Find a Doctor</a></li>
+                        <li><a href="#home">About Us</a></li>
+                        <li><a href="#services">Our Services</a></li>
+                        <li><a href="#doctors">Find a Doctor</a></li>
                         <li><a href="#">Appointments</a></li>
                         <li><a href="#">Career</a></li>
                         </ul>

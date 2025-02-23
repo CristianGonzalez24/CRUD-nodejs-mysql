@@ -1,8 +1,13 @@
-import React from 'react'
+import { useState } from 'react'
+import { useNavigate } from "react-router";
 import { ArrowRight } from 'lucide-react';
 import './HeroSection.css'
+import EmergencyModal from '../EmergencyModal/EmergencyModal';
 
 const HeroSection = () => {
+    const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+    const navigate = useNavigate();
+
     return (
         <section className="hero" id="home">
             <div className="hero-bg"></div>
@@ -20,10 +25,19 @@ const HeroSection = () => {
                         Book Appointment
                         <ArrowRight size={20} />
                         </button>
-                        <button className="btn btn-danger">24/7 Emergencies</button>
+                        <button 
+                        className="btn btn-danger emergency-btn"
+                        onClick={() => setIsEmergencyModalOpen(true)}
+                        >
+                        24/7 Emergencies
+                        </button>
                     </div>
                 </div>
             </div>
+            <EmergencyModal 
+                isOpen={isEmergencyModalOpen}
+                onClose={() => setIsEmergencyModalOpen(false)}
+            />
         </section>
     )
 }

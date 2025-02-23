@@ -1,6 +1,20 @@
 .doctors {
     padding: 5rem 0;
 }
+.loading-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    background: var(--bg-light);
+    border-radius: 0.5rem;
+}
+.loading-text{
+    font-size: 1.25rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    animation: pulse 1.5s ease-in-out infinite;
+}
 .doctors-carousel{
     margin-bottom: 4rem;
     padding: 0 1rem;
@@ -8,38 +22,23 @@
 .doctor-slide{
     padding: 0 1rem;
 }
-.doctor-card{
-    background: white;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    height: 100%;
-}
-.doctor-image{
-    width: 100%;
-    height: 300px;
-    object-fit: cover;
-}
-.doctor-info{
-    padding: 1.5rem;
-}
-.doctor-name{
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
-}
-.doctor-specialization{
-    color: var(--primary-color);
-    font-weight: 500;
-    margin-bottom: 1rem;
-}
-.doctor-bio{
-    color: #666666;
-    margin-bottom: 1.5rem;
-}
 .doctors-footer{
     text-align: center;
 }
 .view-all-btn {
     font-size: 1.125rem;
     padding: 1rem 2rem;
+    text-decoration: none;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 0.4;
+    }
 }
