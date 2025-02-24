@@ -90,6 +90,21 @@ body {
     .newsletter-form {
         flex-direction: column;
     }
+    .filters-section {
+        padding: 1.5rem;
+    }
+    .filter-toggle-btn {
+        display: none;
+    }
+    .filters-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        margin-top: 0;
+    }
+    .search-container {
+        margin-bottom: 0;
+    }
 }
 @media (max-width: 640px) {
     .emergency-modal {
@@ -114,5 +129,14 @@ body {
     }
     .services-grid{
         grid-template-columns: 1fr;
+    }
+    .page-header h1 {
+        font-size: 2rem;
+    }
+    .page-header p {
+        font-size: 1rem;
+    }
+    .filters-section {
+        padding: 0.75rem;
     }
 }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, Link } from "react-router";
+import { Link } from "react-router";
 import { useDoctors } from '../../hooks/useDoctors.js';
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";  
@@ -9,7 +9,6 @@ import DoctorCard from '../DoctorCard/DoctorCard.jsx';
 
 const DoctorSection = () => {
     const { doctors, loading, error, getDoctors } = useDoctors();
-    const navigate = useNavigate();
 
     useEffect(() => {
         getDoctors();
@@ -40,10 +39,6 @@ const DoctorSection = () => {
             }
             }
         ]
-    };
-    
-    const handleViewAll = () => {
-    navigate('/doctors');
     };
 
     if (loading) {
