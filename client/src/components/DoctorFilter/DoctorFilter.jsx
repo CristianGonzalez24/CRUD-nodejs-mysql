@@ -8,11 +8,11 @@ const DoctorFilter = ({ doctors, searchTerm, setSearchTerm, selectedSpecialty, s
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const experienceRanges = [
-        { label: 'Todos', value: 'all' },
-        { label: '0-5 años', min: 0, max: 5 },
-        { label: '6-10 años', min: 6, max: 10 },
-        { label: '11-15 años', min: 11, max: 15 },
-        { label: 'Más de 15 años', min: 16, max: Infinity }
+        { label: 'All Experience', value: 'all' },
+        { label: '0-5 years', min: 0, max: 5 },
+        { label: '6-10 years', min: 6, max: 10 },
+        { label: '11-15 years', min: 11, max: 15 },
+        { label: '15+ years', min: 16, max: Infinity }
     ];
 
     return (
@@ -21,7 +21,7 @@ const DoctorFilter = ({ doctors, searchTerm, setSearchTerm, selectedSpecialty, s
                 <Search className="search-icon" size={20} />
                 <input
                 type="text"
-                placeholder="Search by name or specialty..."
+                placeholder="Search by name..."
                 className="search-input"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

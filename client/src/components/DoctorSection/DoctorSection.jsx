@@ -5,7 +5,8 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";  
 import "slick-carousel/slick/slick-theme.css";  
 import './DoctorSection.css'
-import DoctorCard from '../DoctorCard/DoctorCard.jsx';
+import DoctorCard from '../DoctorCard/DoctorCard';
+import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 
 const DoctorSection = () => {
     const { doctors, loading, error, getDoctors } = useDoctors();
@@ -44,16 +45,17 @@ const DoctorSection = () => {
     if (loading) {
         return (
             <section className="doctors" id="doctors">
-            <div className="container">
-                <div className="section-header">
-                <h2 className="section-title">Our Doctors</h2>
+                <div className="container">
+                    <div className="section-header">
+                        <h2 className="section-title">Our Doctors</h2>
+                    </div>
+
+                    <div className="loading-container">
+                        <LoadingSpinner size="large" color="primary" />
+                    </div>
                 </div>
-                <div className="loading-container">
-                <p className="loading-text">Loading...</p>
-                </div>
-            </div>
             </section>
-        );
+        )
     }
 
     return (

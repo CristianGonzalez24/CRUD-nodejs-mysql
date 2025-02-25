@@ -119,6 +119,14 @@ body {
     .hospital-item {
         padding: 0.75rem;
     }
+    .loading-spinner-container.medium {
+        width: 32px;
+        height: 32px;
+    }
+    .loading-spinner-container.large {
+        width: 48px;
+        height: 48px;
+    }
 }
 @media (max-width: 480px) {
     .hero-title {
