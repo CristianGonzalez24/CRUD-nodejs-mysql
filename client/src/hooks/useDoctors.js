@@ -8,5 +8,5 @@ export const useDoctors = () => {
         throw new Error("useDoctors must be used within a DoctorsProvider");
     }
 
-    return { ...context };
+    return context;
 };

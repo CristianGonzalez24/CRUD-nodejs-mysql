@@ -32,12 +32,3 @@ export const doctorSchema = z.object({
         .boolean()
         .optional(),
 });
-
-// const formatPhone = (phone) => {
-//     if (phone.length === 10) {
-//         return `${phone.slice(0, 3)}-${phone.slice(3, 6)}-${phone.slice(6)}`; // Ej: 123-456-7890
-//     }
-//     return phone; // Devuelve el número como está si no es de 10 dígitos
-// };
-
-// console.log(formatPhone("1234567890")); // Resultado: 123-456-7890
