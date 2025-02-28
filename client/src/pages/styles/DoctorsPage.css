@@ -34,6 +34,11 @@
   gap: 1rem;
   padding: 1rem 0;
 }
+.doctors-grid-loading{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .no-results{
   text-align: center;
   padding: 3rem 1rem;
@@ -46,13 +51,3 @@
   color: #666;
   margin: 0;
 }
-
-/* 
-  
-  @media (max-width: 480px) {
-    
-  
-    
-  
-    
-  } */ 

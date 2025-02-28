@@ -1,33 +1,42 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useDoctors } from '../hooks/useDoctors.js';
 import DoctorCard from '../components/DoctorCard/DoctorCard';
 import DoctorFilter from '../components/DoctorFilter/DoctorFilter';
+import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 import './styles/DoctorsPage.css'
 
 const DoctorsPage = () => {
-    const { doctors, getDoctors } = useDoctors();
+    const { doctors, getDoctors, loading } = useDoctors();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSpecialty, setSelectedSpecialty] = useState('all');
     const [selectedExperience, setSelectedExperience] = useState('all');
 
+    const fetchDoctors = useCallback(() => {
+        if (doctors.length === 0) {
+            getDoctors();
+        }
+    }, [doctors.length, getDoctors]);
+
     useEffect(() => {
-        getDoctors();
-    }, []);
+        fetchDoctors();
+    }, [fetchDoctors]);
 
     const filteredDoctors = useMemo(() => {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        let minExperience = 0, maxExperience = Infinity;
+
+        if (selectedExperience !== 'all') {
+            [minExperience, maxExperience] = selectedExperience.split('-').map(Number);
+        }
         return doctors.filter(doctor => {
             const matchesSearch = 
-                doctor.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase());
+                doctor.first_name.toLowerCase().includes(lowerSearchTerm) ||
+                doctor.specialty.toLowerCase().includes(lowerSearchTerm);
 
             const matchesSpecialty = selectedSpecialty === 'all' || doctor.specialty === selectedSpecialty;
 
-            let matchesExperience = true;
-            if (selectedExperience !== 'all') {
-                const [min, max] = selectedExperience.split('-').map(Number);
-                matchesExperience = doctor.years_of_experience >= min && doctor.years_of_experience <= max;
-            }
+            const matchesExperience = doctor.years_of_experience >= minExperience && doctor.years_of_experience <= maxExperience;
 
             return matchesSearch && matchesSpecialty && matchesExperience;
         });
@@ -56,7 +65,11 @@ const DoctorsPage = () => {
                     />
                 </div>
 
-                {filteredDoctors.length > 0 ? (
+                {loading ? (
+                    <div className="doctors-grid-loading">   
+                        <LoadingSpinner size="large" color="primary"/>
+                    </div>
+                ) : filteredDoctors.length > 0 ? (
                     <div className="doctors-grid">
                     {filteredDoctors.map(doctor => (
                         <DoctorCard key={doctor.id} doctor={doctor} />
@@ -64,10 +77,9 @@ const DoctorsPage = () => {
                     </div>
                 ) : (
                     <div className="no-results">
-                        <p>No se encontraron médicos que coincidan con los criterios de búsqueda.</p>
+                        <p>No doctors found.</p>
                     </div>
-                )
-                }
+                )}
             </div>
         </div>
     )

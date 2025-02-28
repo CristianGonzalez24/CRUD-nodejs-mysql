@@ -17,7 +17,7 @@ const handleError = (error) => {
         toast.error(`Error ${error.response.status}: ${errorMessage}`);
     } else if (error.request) {
         console.error('Could not connect to the server. Please check your internet connection.');
-        toast.error('Could not connect to the server. Please check your internet connection.', { hideProgressBar: true,});
+        toast.error('Could not connect to the server. Please check your internet connection.');
     } else {
         console.error('Error:', error.message);
         toast.error(`Error: ${error.message}`);

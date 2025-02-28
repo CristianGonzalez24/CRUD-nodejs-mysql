@@ -9,7 +9,7 @@ import DoctorCard from '../DoctorCard/DoctorCard';
 import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 
 const DoctorSection = () => {
-    const { doctors, loading, error, getDoctors } = useDoctors();
+    const { doctors, loading, getDoctors } = useDoctors();
 
     useEffect(() => {
         getDoctors();

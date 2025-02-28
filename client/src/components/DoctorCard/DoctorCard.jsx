@@ -21,14 +21,14 @@ const DoctorCard = ({doctor}) => {
 
     const handlePhoneClick = (event, phone) => {
         if (!navigator.userAgent.includes("Mobile")) {
-            toast.warning(`Phones cannot be called on this device. Please try to call manually: ${phone}`, { autoClose: 5000 });
+            toast.warning(`Phones cannot be called on this device. Please try to call manually: ${phone}`);
             event.preventDefault();
         }
     };
 
     const handleEmailClick = (event, email) => {
         if (!navigator.userAgent.includes("Mobile") && !navigator.userAgent.includes("Mac")) {
-            toast.warning(`Emails cannot be sent on this device. Please try to send an email manually: ${email}`, { autoClose: 5000 });
+            toast.warning(`Emails cannot be sent on this device. Please try to send an email manually: ${email}`);
             event.preventDefault();
         }
     };
