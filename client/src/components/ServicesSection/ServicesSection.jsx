@@ -45,15 +45,18 @@ const ServicesSection = () => {
                     </p>
                 </div>
 
-                <div className="services-grid">
+                <div className="services-grid" role="list">
                     {services.map((service, index) => (
-                        <div key={index} className="service-card">
-                        <div className="service-icon">{service.icon}</div>
-                        <h3 className="service-title">{service.title}</h3>
-                        <p className="service-description">{service.description}</p>
-                        <a href="#" className="service-link">
-                        Learn more <ArrowRight size={16} />
-                        </a>
+                        <div key={index} className="service-card" role="listitem">
+                            <div className="service-icon">{service.icon}</div>
+                            <h3 className="service-title">{service.title}</h3>
+                            <p className="service-description">{service.description}</p>
+                            <button 
+                                className="service-link" 
+                                aria-label={`Learn more about ${service.title}`}
+                            >
+                            Learn more <ArrowRight size={16} />
+                            </button>
                         </div>
                     ))}
                 </div>

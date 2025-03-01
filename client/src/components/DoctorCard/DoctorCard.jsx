@@ -1,13 +1,13 @@
+import { useMemo, useCallback } from "react";
 import { toast } from "react-toastify";
 import { Mail, Phone, Calendar, Award } from 'lucide-react';
 import './DoctorCard.css'
 
 const DoctorCard = ({doctor}) => {
-    const formatPhone = (phone) => {
-        if (!phone) return "";
-    
-        const digits = phone.trim();
-    
+    const formattedPhone = useMemo(() => {
+        if (!doctor?.phone) return "";
+        const digits = doctor.phone.trim();
+
         if (digits.length === 10) {
             return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
         } else if (digits.length === 11) {
@@ -15,23 +15,23 @@ const DoctorCard = ({doctor}) => {
         } else if (digits.length === 12) {
             return `+${digits.slice(0, 2)} ${digits.slice(2, 6)}-${digits.slice(6)}`;
         }
-    
-        return phone;
-    };
 
-    const handlePhoneClick = (event, phone) => {
+        return doctor.phone;
+    }, [doctor?.phone]);
+
+    const handlePhoneClick = useCallback((event) => {
         if (!navigator.userAgent.includes("Mobile")) {
-            toast.warning(`Phones cannot be called on this device. Please try to call manually: ${phone}`);
+            toast.warning(`Phones cannot be called on this device. Please try manually: ${doctor.phone}`);
             event.preventDefault();
         }
-    };
+    }, [doctor?.phone]);
 
-    const handleEmailClick = (event, email) => {
+    const handleEmailClick = useCallback((event) => {
         if (!navigator.userAgent.includes("Mobile") && !navigator.userAgent.includes("Mac")) {
-            toast.warning(`Emails cannot be sent on this device. Please try to send an email manually: ${email}`);
+            toast.warning(`Emails cannot be sent on this device. Please try manually: ${doctor.email}`);
             event.preventDefault();
         }
-    };
+    }, [doctor?.email]);
 
     return (
         <div className="doctor-card">
@@ -46,23 +46,25 @@ const DoctorCard = ({doctor}) => {
                 </div>
             </div>
             <div className="doctor-info">
-                <h3 className="doctor-name">{doctor.first_name} {doctor.last_name}</h3>
-                <p className="doctor-specialization">{doctor.specialty}</p>
-                <div className="doctor-experience">
-                    <Award size={16} />
-                    <span>{doctor.years_of_experience} {doctor.years_of_experience === 1 ? 'year' : 'years'} of experience</span>
-                </div>
+                <h3 className="doctor-name">{doctor?.first_name} {doctor?.last_name}</h3>
+                <p className="doctor-specialization">{doctor?.specialty || "Specialty not specified"}</p>
+                {doctor?.years_of_experience && (
+                    <div className="doctor-experience">
+                        <Award size={16} />
+                        <span>{doctor.years_of_experience} {doctor.years_of_experience === 1 ? 'year' : 'years'} of experience</span>
+                    </div>
+                )}
                 <div className="doctor-contact">
-                {doctor.email && (
-                    <a href={`mailto:${doctor.email}`} className="doctor-contact-item" onClick={(e) => handleEmailClick(e, doctor.email)}>
-                    <Mail size={16} />
-                    <span>{doctor.email}</span>
+                {doctor?.email && (
+                    <a href={`mailto:${doctor.email}`} className="doctor-contact-item" onClick={handleEmailClick}>
+                        <Mail size={16} />
+                        <span>{doctor.email}</span>
                     </a>
                 )}
-                {doctor.phone && (
-                    <a href={`tel:${doctor.phone}`} className="doctor-contact-item" onClick={(e) => handlePhoneClick(e, doctor.phone)}>
-                    <Phone size={16} />
-                    <span>{formatPhone(doctor.phone)}</span>
+                {doctor?.phone && (
+                    <a href={`tel:${doctor.phone}`} className="doctor-contact-item" onClick={handlePhoneClick}>
+                        <Phone size={16} />
+                        <span>{formattedPhone}</span>
                     </a>
                 )}
                 </div>

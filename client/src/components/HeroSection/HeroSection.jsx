@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 import { ArrowRight } from 'lucide-react';
 import './HeroSection.css'
 import EmergencyModal from '../EmergencyModal/EmergencyModal';
 
 const HeroSection = () => {
     const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
-    const navigate = useNavigate();
 
     return (
         <section className="hero" id="home">
@@ -21,13 +20,14 @@ const HeroSection = () => {
                     </p>
 
                     <div className="hero-buttons">
-                        <button className="btn btn-primary">
+                        <Link to="/appointments" className="btn btn-primary" aria-label="Book an appointment">
                         Book Appointment
                         <ArrowRight size={20} />
-                        </button>
+                        </Link>
                         <button 
                         className="btn btn-danger emergency-btn"
                         onClick={() => setIsEmergencyModalOpen(true)}
+                        aria-label="Open emergency contact modal"
                         >
                         24/7 Emergencies
                         </button>

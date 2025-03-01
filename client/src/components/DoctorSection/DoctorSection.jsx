@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from "react-router";
 import { useDoctors } from '../../hooks/useDoctors.js';
 import Slider from "react-slick";
@@ -13,9 +13,9 @@ const DoctorSection = () => {
 
     useEffect(() => {
         getDoctors();
-    }, []);
+    }, [getDoctors]);
 
-    const settings = {
+    const settings = useMemo(() => ({
         dots: true,
         infinite: true,
         speed: 500,
@@ -25,38 +25,10 @@ const DoctorSection = () => {
         autoplaySpeed: 3000,
         pauseOnHover: true,
         responsive: [
-            {
-            breakpoint: 1024,
-            settings: {
-                slidesToShow: 2,
-                slidesToScroll: 1,
-            }
-            },
-            {
-            breakpoint: 600,
-            settings: {
-                slidesToShow: 1,
-                slidesToScroll: 1
-            }
-            }
+            { breakpoint: 1024, settings: { slidesToShow: 2, slidesToScroll: 1 } },
+            { breakpoint: 600, settings: { slidesToShow: 1, slidesToScroll: 1 } }
         ]
-    };
-
-    if (loading) {
-        return (
-            <section className="doctors" id="doctors">
-                <div className="container">
-                    <div className="section-header">
-                        <h2 className="section-title">Our Doctors</h2>
-                    </div>
-
-                    <div className="loading-container">
-                        <LoadingSpinner size="large" color="primary" />
-                    </div>
-                </div>
-            </section>
-        )
-    }
+    }), []);
 
     return (
         <section className="doctors" id="doctors">
@@ -68,16 +40,21 @@ const DoctorSection = () => {
                     </p>
                 </div>
 
-                <div className="doctors-carousel">
-                    <Slider {...settings}>
-                        {doctors?.map((doctor, index) => (
-                        <div key={index} className="doctor-slide">
-                            <DoctorCard key={doctor.id} doctor={doctor} />
-                        </div>
-                        ))}
-                    </Slider>
-                </div>
-
+                {loading ? (
+                    <div className="loading-container">
+                        <LoadingSpinner size={50} color="var(--primary-color)" />
+                    </div>
+                ) :
+                    <div className="doctors-carousel">
+                        <Slider {...settings}>
+                            {doctors?.map((doctor) => (
+                                <div key={doctor.id} className="doctor-slide">
+                                    <DoctorCard doctor={doctor} />
+                                </div>
+                            ))}
+                        </Slider>
+                    </div>
+                }
                 <div className="doctors-footer">
                     <Link to="/doctors" className="btn btn-primary view-all-btn">
                         View All Doctors

@@ -1,8 +1,15 @@
+import { useEffect } from 'react';
 import { Phone, MapPin, Ambulance, X } from 'lucide-react';
 import './EmergencyModal.css'
 
 const EmergencyModal = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
+
+    const handleOverlayClick = (e) => {
+        if (e.target.classList.contains("emergency-modal-overlay")) {
+            onClose();
+        }
+    };
 
     const emergencyNumbers = [
         { label: 'Emergency Ambulance', number: '911' },
@@ -22,11 +29,32 @@ const EmergencyModal = ({ isOpen, onClose }) => {
         address: '456 Emergency Rd, Downtown',
         distance: '1.2 miles',
         phone: '(555) 987-6543'
-    }
-    ];
+    }];
 
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === "Escape") {
+                onClose();
+            }
+        };
+    
+        if (isOpen) {
+            document.addEventListener("keydown", handleEscape);
+        }
+    
+        return () => {
+            document.removeEventListener("keydown", handleEscape);
+        };
+    }, [isOpen]);
+    
     return (
-        <div className="emergency-modal-overlay">
+        <div 
+            className="emergency-modal-overlay" 
+            onClick={handleOverlayClick}
+            role="dialog"
+            aria-labelledby="emergency-modal-title"
+            aria-modal="true"
+        >
             <div className="emergency-modal">
                 <button className="emergency-close-btn" onClick={onClose}>
                     <X size={24} />
@@ -34,7 +62,7 @@ const EmergencyModal = ({ isOpen, onClose }) => {
 
                 <div className="emergency-header">
                     <Ambulance size={32} />
-                    <h2>Emergency Services</h2>
+                    <h2 id="emergency-modal-title">Emergency Services</h2>
                 </div>
 
                 <div className="emergency-content">

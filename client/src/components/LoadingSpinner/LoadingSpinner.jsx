@@ -1,14 +1,21 @@
 import './LoadingSpinner.css'
 
-const LoadingSpinner = ({ size = 'medium', color = 'primary' }) => {
+const LoadingSpinner = ({ size = 40, color = "#007bff" }) => {
     return (
-        <div className={`loading-spinner-container ${size}`}>
-            <div className={`loading-spinner ${color}`}>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
+        <div 
+            className="loading-spinner-container" 
+            style={{ width: size, height: size }} 
+            aria-live="polite"
+            aria-busy="true"
+        >
+            <div 
+                className="loading-spinner" 
+                style={{ 
+                    width: size, 
+                    height: size, 
+                    borderColor: `${color} transparent ${color} transparent` 
+                }} 
+            />
         </div>
     )
 }

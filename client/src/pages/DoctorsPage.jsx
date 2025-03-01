@@ -67,7 +67,7 @@ const DoctorsPage = () => {
 
                 {loading ? (
                     <div className="doctors-grid-loading">   
-                        <LoadingSpinner size="large" color="primary"/>
+                        <LoadingSpinner size={50} color="var(--primary-color)" />
                     </div>
                 ) : filteredDoctors.length > 0 ? (
                     <div className="doctors-grid">

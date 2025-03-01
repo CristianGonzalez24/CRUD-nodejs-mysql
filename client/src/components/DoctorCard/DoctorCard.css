@@ -15,9 +15,9 @@
 .doctor-image{
     background-image: url('./assets/doctor-avatar.webp');
     background-size: cover;
+    background-repeat: no-repeat;
     width: 100%;
     height: 300px;
-    object-fit: cover;
 }
 .doctor-availability{
     position: absolute;
