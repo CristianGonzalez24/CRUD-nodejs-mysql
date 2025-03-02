@@ -117,6 +117,23 @@ body {
     .search-container {
         margin-bottom: 0;
     }
+    /* NotFound Page */
+    .not-found-content {
+        padding: 2rem 1.5rem;
+    }
+    .not-found-title {
+        font-size: 2rem;
+    }
+    .not-found-message {
+        font-size: 1rem;
+    }
+    .not-found-actions {
+        flex-direction: column;
+    }
+    .not-found-btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 @media (max-width: 640px) {
     .emergency-modal {
@@ -158,5 +175,16 @@ body {
     }
     .filters-section {
         padding: 0.75rem;
+    }
+    /* NotFound Page */
+    .error-code {
+        font-size: 6rem;
+    }
+    .error-circle {
+        width: 180px;
+        height: 180px;
+    }
+    .not-found-illustration {
+        height: 150px;
     }
 }

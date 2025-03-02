@@ -4,6 +4,7 @@ import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
 import HomePage from './pages/HomePage';
 import DoctorsPage from './pages/DoctorsPage';
+import NotFound from './pages/NotFound';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -22,7 +23,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/doctors" element={<DoctorsPage />} />
-        <Route path="*" element={<h2>404 - Page Not Found</h2>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
     </div>
