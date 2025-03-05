@@ -9,8 +9,6 @@ const allowedOrigins =
 
 export const corsOptions = {
     origin: function (origin, callback) {
-        console.log("Origin:", origin); // Depuración
-
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {

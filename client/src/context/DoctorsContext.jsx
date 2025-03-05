@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useCallback } from "react";
-import { getDoctorsRequest } from '../api/doctors.js';
+import { getDoctorsRequest, getAllDoctorsRequest } from '../api/doctors.js';
 import { toast } from 'react-toastify';
 
 export const DoctorsContext = createContext();
@@ -8,6 +8,7 @@ export const DoctorsProvider = ({ children }) => {
     const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(true);
 
     const getDoctors = useCallback(async () => {
         setLoading(true);
@@ -15,7 +16,7 @@ export const DoctorsProvider = ({ children }) => {
         let isMounted = true;
 
         try {
-            const response = await getDoctorsRequest();
+            const response = isAdmin ? await getAllDoctorsRequest() : await getDoctorsRequest();
             if (isMounted) {
                 setDoctors(response.data.data);
             }
@@ -36,7 +37,7 @@ export const DoctorsProvider = ({ children }) => {
     }, []);
 
     return (
-        <DoctorsContext.Provider value={{ doctors, loading, error, getDoctors }}>
+        <DoctorsContext.Provider value={{ doctors, loading, error, isAdmin, getDoctors }}>
             {children}
         </DoctorsContext.Provider>
     );

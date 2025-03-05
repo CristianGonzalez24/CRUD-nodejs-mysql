@@ -6,11 +6,12 @@ import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 import './styles/DoctorsPage.css'
 
 const DoctorsPage = () => {
-    const { doctors, getDoctors, loading } = useDoctors();
+    const { doctors, getDoctors, loading, isAdmin } = useDoctors();
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSpecialty, setSelectedSpecialty] = useState('all');
     const [selectedExperience, setSelectedExperience] = useState('all');
+    const [showInactive, setShowInactive] = useState(false);
 
     const fetchDoctors = useCallback(() => {
         if (doctors.length === 0) {
@@ -29,7 +30,10 @@ const DoctorsPage = () => {
         if (selectedExperience !== 'all') {
             [minExperience, maxExperience] = selectedExperience.split('-').map(Number);
         }
-        return doctors.filter(doctor => {
+
+        return doctors
+        .filter(doctor => doctor.is_active === 1)
+        .filter(doctor => {
             const matchesSearch = 
                 doctor.first_name.toLowerCase().includes(lowerSearchTerm) ||
                 doctor.specialty.toLowerCase().includes(lowerSearchTerm);
@@ -41,6 +45,10 @@ const DoctorsPage = () => {
             return matchesSearch && matchesSpecialty && matchesExperience;
         });
     }, [doctors, searchTerm, selectedSpecialty, selectedExperience]);
+
+    const inactiveDoctors = useMemo(() => {
+        return showInactive ? doctors.filter(doctor => doctor.is_active === 0) : [];
+    }, [showInactive, doctors]);
 
     return (
         <div className="doctors-page">
@@ -78,6 +86,33 @@ const DoctorsPage = () => {
                 ) : (
                     <div className="no-results">
                         <p>No doctors found.</p>
+                    </div>
+                )}
+
+                { isAdmin && (
+                    <div className="inactive-doctors-section">
+                        <div className="inactive-header">
+                            <h2>Inactive Doctors</h2>
+                            <button 
+                                className="toggle-inactive-btn"
+                                onClick={() => setShowInactive(!showInactive)}
+                                aria-label={showInactive ? "Hide inactive doctors" : "Show inactive doctors"}
+                            >
+                                {showInactive ? 'Hide' : 'Show'}
+                            </button>
+                        </div>
+
+                        {showInactive && (
+                            <div className="inactive-doctors-grid">
+                                {inactiveDoctors.length > 0 ? (
+                                    inactiveDoctors.map(doctor => (
+                                    <DoctorCard key={doctor.id} doctor={doctor} />
+                                    )) 
+                                ) : (
+                                    <p className="no-inactive-message">No inactive doctors found.</p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
