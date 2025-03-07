@@ -1,6 +1,8 @@
 :root {
     --primary-color: #2563eb;
     --danger-color: #dc3545;
+    --success-color: #32c27f;
+    --warning-color: #f59e0b;
     --text-color: #333333;
     --bg-light: #f8f9fa;
     --border-color: #dee2e6;
@@ -50,6 +52,20 @@ body {
 }
 .btn-danger:hover {
     background-color: #bd2130;
+}
+.btn-warning {
+    background-color: #f59e0b;
+    color: white;
+}
+.btn-warning:hover {
+    background-color: #d97706;
+}
+.btn-success {
+    background-color: #32c27f;
+    color: white;
+}
+.btn-success:hover {
+    background-color: #1e7e34;
 }
 /* Visually Hidden Styles */
 .visually-hidden{
@@ -155,6 +171,21 @@ body {
     .loading-spinner-container.large {
         width: 48px;
         height: 48px;
+    }
+    .doctor-actions {
+        grid-template-columns: 1fr;
+    }
+    /*Confirm modal*/
+    .modal-content {
+        width: 95%;
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    .modal-actions {
+        flex-direction: column;
+    }
+    .modal-actions button {
+        width: 100%;
     }
 }
 @media (max-width: 480px) {

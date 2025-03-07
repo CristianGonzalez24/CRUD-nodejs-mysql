@@ -1,9 +1,22 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
+import { useDoctors } from '../../hooks/useDoctors.js';
+import ConfirmationModal from '../ConfirmationModal/ConfirmationModal';
 import { toast } from "react-toastify";
-import { Mail, Phone, Calendar, Award } from 'lucide-react';
+import { Mail, Phone, Calendar, Award, AlertTriangle } from 'lucide-react';
 import './DoctorCard.css'
 
 const DoctorCard = ({doctor}) => {
+    const { isAdmin, loading, deactivateDoctor, activateDoctor } = useDoctors();
+
+    const [showModal, setShowModal] = useState(false);
+    const [closing, setClosing] = useState(false);
+    const [modalConfig, setModalConfig] = useState({
+        title: '',
+        message: '',
+        type: 'info',
+        onConfirm: () => {},
+    });
+
     const formattedPhone = useMemo(() => {
         if (!doctor?.phone) return "";
         const digits = doctor.phone.trim();
@@ -33,7 +46,49 @@ const DoctorCard = ({doctor}) => {
         }
     }, [doctor?.email]);
 
+    const handleDeactivate = (doctor) => {
+        setModalConfig({
+            title: 'Deactivate Doctor',
+            message: `Are you sure you want to deactivate Dr(a). ${doctor.first_name} ${doctor.last_name}?\nThis will temporarily remove them from the active doctors list.`,
+            type: 'warning',
+            onConfirm: () => deactivateDoctor(doctor.id),
+        });
+        setShowModal(true);
+    };
+
+    const handleActivate = (doctor) => {
+        setModalConfig({
+            title: 'Activate Doctor',
+            message: `Are you sure you want to activate Dr(a). ${doctor.first_name} ${doctor.last_name}?`,
+            type: 'success',
+            onConfirm: () => activateDoctor(doctor.id),
+        });
+        setShowModal(true);
+    };
+
+    const handleDelete = (doctor) => {
+        setModalConfig({
+            title: 'Delete Doctor',
+            message: `WARNING: You are about to permanently delete Dr(a). ${doctor.first_name} ${doctor.last_name}.\n\nThis action cannot be undone. Are you sure you want to continue?`,
+            type: 'danger',
+            onConfirm: () => console.log(`Borrando al Dr(a)`),
+            confirmText: 'Delete',
+            cancelText: 'Keep',
+        });
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        if (loading) return;
+        setClosing(true); 
+        setTimeout(() => {
+            setShowModal(false);
+            setClosing(false);
+        }, 300);
+    };
+
     return (
+        <>
         <div className="doctor-card">
             <div className="doctor-image-container">
                 <img
@@ -45,6 +100,7 @@ const DoctorCard = ({doctor}) => {
                     <span>Available</span>
                 </div>
             </div>
+
             <div className="doctor-info">
                 <h3 className="doctor-name">{doctor?.first_name} {doctor?.last_name}</h3>
                 <p className="doctor-specialization">{doctor?.specialty || "Specialty not specified"}</p>
@@ -68,9 +124,62 @@ const DoctorCard = ({doctor}) => {
                     </a>
                 )}
                 </div>
+
+                <div className="doctor-actions">
+                    {isAdmin && (
+                        doctor?.is_active === 1 ? (
+                            <>
+                                <button 
+                                    className="btn btn-primary doctor-action-btn"
+                                    onClick={() => console.log("Update doctor")}
+                                >
+                                    Update
+                                </button>
+                                <button
+                                    className="btn btn-secondary doctor-action-btn"
+                                    onClick={() => handleDeactivate(doctor)}
+                                    disabled={loading}
+                                >
+                                    Deactivate
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    className="btn btn-success doctor-action-btn"
+                                    onClick={() => handleActivate(doctor)}
+                                    disabled={loading}
+                                >
+                                    Activate
+                                </button>
+                                <button
+                                    className="btn btn-danger doctor-action-btn"
+                                    onClick={() => handleDelete(doctor)}
+                                >
+                                    <AlertTriangle size={16} />
+                                    Delete   
+                                </button>
+                            </>
+                        )
+                    )}
+                </div>
             </div>
         </div>
-    )
-}
+
+        <ConfirmationModal
+            loading={loading}
+            isOpen={showModal}
+            onClose={handleCloseModal}
+            closing={closing}
+            title={modalConfig.title}
+            message={modalConfig.message}
+            type={modalConfig.type}
+            onConfirm={modalConfig.onConfirm}
+            confirmText={modalConfig.confirmText}
+            cancelText={modalConfig.cancelText}
+        />
+        </>
+    );
+};
 
 export default DoctorCard

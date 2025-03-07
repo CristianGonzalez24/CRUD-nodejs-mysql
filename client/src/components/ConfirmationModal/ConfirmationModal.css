@@ -1,0 +1,100 @@
+.modal-overlay{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-in-out;
+}
+.modal-overlay.hidden {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+.modal-content{
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    animation: slideIn 0.3s ease-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.modal-content.hidden {
+    animation: slideOut 0.3s ease-out forwards;
+}
+.modal-close{
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666666;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+}
+.modal-close:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+.modal-header{
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+.modal-icon {
+    flex-shrink: 0;
+}
+.modal-icon.danger {
+    color: var(--danger-color);
+}
+.modal-icon.warning {
+    color: var(--warning-color);
+}
+.modal-icon.success {
+    color: var(--success-color);
+}
+.modal-icon.info {
+    color: var(--primary-color);
+}
+.modal-title{
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+.modal-message{
+    color: #666666;
+    margin-bottom: 2rem;
+    white-space: pre-line;
+    line-height: 1.5;
+}
+.modal-actions{
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+/* Animations*/
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes slideOut {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-20px); opacity: 0; }
+}
