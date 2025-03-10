@@ -6,7 +6,7 @@ import { Mail, Phone, Calendar, Award, AlertTriangle } from 'lucide-react';
 import './DoctorCard.css'
 
 const DoctorCard = ({doctor}) => {
-    const { isAdmin, loading, deactivateDoctor, activateDoctor } = useDoctors();
+    const { isAdmin, loading, deactivateDoctor, activateDoctor, deleteDoctor } = useDoctors();
 
     const [showModal, setShowModal] = useState(false);
     const [closing, setClosing] = useState(false);
@@ -46,10 +46,12 @@ const DoctorCard = ({doctor}) => {
         }
     }, [doctor?.email]);
 
+    const doctorName = `Dr(a). ${doctor.first_name} ${doctor.last_name}`;
+
     const handleDeactivate = (doctor) => {
         setModalConfig({
             title: 'Deactivate Doctor',
-            message: `Are you sure you want to deactivate Dr(a). ${doctor.first_name} ${doctor.last_name}?\nThis will temporarily remove them from the active doctors list.`,
+            message: `Are you sure you want to deactivate ${doctorName}?\nThis will temporarily remove them from the active doctors list.`,
             type: 'warning',
             onConfirm: () => deactivateDoctor(doctor.id),
         });
@@ -59,7 +61,7 @@ const DoctorCard = ({doctor}) => {
     const handleActivate = (doctor) => {
         setModalConfig({
             title: 'Activate Doctor',
-            message: `Are you sure you want to activate Dr(a). ${doctor.first_name} ${doctor.last_name}?`,
+            message: `Are you sure you want to activate ${doctorName}?`,
             type: 'success',
             onConfirm: () => activateDoctor(doctor.id),
         });
@@ -69,9 +71,9 @@ const DoctorCard = ({doctor}) => {
     const handleDelete = (doctor) => {
         setModalConfig({
             title: 'Delete Doctor',
-            message: `WARNING: You are about to permanently delete Dr(a). ${doctor.first_name} ${doctor.last_name}.\n\nThis action cannot be undone. Are you sure you want to continue?`,
+            message: `WARNING: You are about to permanently delete ${doctorName}.\n\nThis action cannot be undone. Are you sure you want to continue?`,
             type: 'danger',
-            onConfirm: () => console.log(`Borrando al Dr(a)`),
+            onConfirm: () => deleteDoctor(doctor.id),
             confirmText: 'Delete',
             cancelText: 'Keep',
         });
@@ -155,6 +157,7 @@ const DoctorCard = ({doctor}) => {
                                 <button
                                     className="btn btn-danger doctor-action-btn"
                                     onClick={() => handleDelete(doctor)}
+                                    disabled={loading}
                                 >
                                     <AlertTriangle size={16} />
                                     Delete   

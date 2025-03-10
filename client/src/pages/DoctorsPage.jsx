@@ -3,6 +3,7 @@ import { useDoctors } from '../hooks/useDoctors.js';
 import DoctorCard from '../components/DoctorCard/DoctorCard';
 import DoctorFilter from '../components/DoctorFilter/DoctorFilter';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
+import Pagination from '../components/Pagination/Pagination';
 import './styles/DoctorsPage.css'
 
 const DoctorsPage = () => {
@@ -12,6 +13,10 @@ const DoctorsPage = () => {
     const [selectedSpecialty, setSelectedSpecialty] = useState('all');
     const [selectedExperience, setSelectedExperience] = useState('all');
     const [showInactive, setShowInactive] = useState(false);
+    const [activePage, setActivePage] = useState(1);
+    const [inactivePage, setInactivePage] = useState(1);
+
+    const doctorsPerPage = 8;
 
     const fetchDoctors = useCallback(() => {
         if (doctors.length === 0) {
@@ -50,6 +55,21 @@ const DoctorsPage = () => {
         return showInactive ? doctors.filter(doctor => doctor.is_active === 0) : [];
     }, [showInactive, doctors]);
 
+    const totalActivePages = Math.ceil(filteredDoctors.length / doctorsPerPage);
+    const totalInactivePages = Math.ceil(inactiveDoctors.length / doctorsPerPage);
+    const getCurrentPageItems = (items, page) => {
+        const startIndex = (page - 1) * doctorsPerPage;
+        return items.slice(startIndex, startIndex + doctorsPerPage);
+    };
+
+    
+    const currentActiveDoctors = getCurrentPageItems(filteredDoctors, activePage);
+    const currentInactiveDoctors = getCurrentPageItems(inactiveDoctors, inactivePage);
+
+    useEffect(() => {
+        setActivePage(1);
+    }, [searchTerm, selectedSpecialty, selectedExperience]);
+
     return (
         <div className="doctors-page">
             <div className="container">
@@ -78,16 +98,28 @@ const DoctorsPage = () => {
                         <LoadingSpinner size={50} color="var(--primary-color)" />
                     </div>
                 ) : filteredDoctors.length > 0 ? (
-                    <div className="doctors-grid">
-                    {filteredDoctors.map(doctor => (
-                        <DoctorCard key={doctor.id} doctor={doctor} />
-                    ))}
-                    </div>
+                    <>
+                        <div className="doctors-grid">
+                        {currentActiveDoctors.map(doctor => (
+                            <DoctorCard key={doctor.id} doctor={doctor} />
+                        ))}
+                        </div>
+
+                        {totalActivePages >= 1 && (
+                            <Pagination
+                                currentPage={activePage}
+                                totalPages={totalActivePages}
+                                onPageChange={setActivePage}
+                            />
+                        )}
+                    </>
                 ) : (
                     <div className="no-results">
                         <p>No doctors found.</p>
                     </div>
                 )}
+
+                
 
                 { isAdmin && (
                     <div className="inactive-doctors-section">
@@ -103,15 +135,25 @@ const DoctorsPage = () => {
                         </div>
 
                         {showInactive && (
-                            <div className="inactive-doctors-grid">
-                                {inactiveDoctors.length > 0 ? (
-                                    inactiveDoctors.map(doctor => (
-                                    <DoctorCard key={doctor.id} doctor={doctor} />
-                                    )) 
-                                ) : (
-                                    <p className="no-inactive-message">No inactive doctors found.</p>
+                            <>
+                                <div className="inactive-doctors-grid">
+                                    {currentInactiveDoctors.length > 0 ? (
+                                        currentInactiveDoctors.map(doctor => (
+                                        <DoctorCard key={doctor.id} doctor={doctor} />
+                                        )) 
+                                    ) : (
+                                        <p className="no-inactive-message">No inactive doctors found.</p>
+                                    )}
+                                </div>
+
+                                {totalInactivePages >= 1 && (
+                                    <Pagination
+                                    currentPage={inactivePage}
+                                    totalPages={totalInactivePages}
+                                    onPageChange={setInactivePage}
+                                    />
                                 )}
-                            </div>
+                            </>
                         )}
                     </div>
                 )}

@@ -47,7 +47,7 @@ const DoctorSection = () => {
                 ) :
                     <div className="doctors-carousel">
                         <Slider {...settings}>
-                            {doctors?.map((doctor) => (
+                            {doctors?.filter(doctor => doctor.is_active === 1).map((doctor) => (
                                 <div key={doctor.id} className="doctor-slide">
                                     <DoctorCard doctor={doctor} />
                                 </div>

@@ -150,6 +150,18 @@ body {
         width: 100%;
         justify-content: center;
     }
+    /*Pagination*/
+    .pagination {
+        padding: 12px;
+        gap: 8px;
+    }
+    
+    .pagination-btn,
+    .pagination-number {
+        min-width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
 }
 @media (max-width: 640px) {
     .emergency-modal {
@@ -217,5 +229,32 @@ body {
     }
     .not-found-illustration {
         height: 150px;
+    }
+    /*Pagination*/
+    .pagination {
+        flex-direction: column;
+        padding: 8px;
+    }
+    
+    .pagination-numbers {
+        order: 1;
+        margin: 8px 0;
+        width: 100%;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .pagination-btn {
+        order: 2;
+        width: 100%;
+        max-width: 200px;
+        height: 40px;
+        font-size: 0.9rem;
+    }
+    
+    .pagination-number {
+        min-width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
     }
 }

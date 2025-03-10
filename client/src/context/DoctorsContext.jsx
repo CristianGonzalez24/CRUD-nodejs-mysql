@@ -44,8 +44,9 @@ export const DoctorsProvider = ({ children }) => {
             toast.success("Doctor deactivated successfully!");
             getDoctors();
         } catch (error) {
-            toast.error("Failed to deactivate doctor. Please try again later.");
             console.error("Failed to deactivate doctor:", error);
+            setError(error.response?.data?.message || "Failed to deactivate doctor");
+            toast.error("Failed to deactivate doctor. Please try again later.");
         } finally {
             setLoading(false);
         }
@@ -59,15 +60,33 @@ export const DoctorsProvider = ({ children }) => {
             toast.success("Doctor activated successfully!");
             getDoctors();
         } catch (error) {
-            toast.error("Failed to activate doctor. Please try again later.");
             console.error("Failed to activate doctor:", error); 
+            setError(error.response?.data?.message || "Failed to activate doctor");
+            toast.error("Failed to activate doctor. Please try again later.");
         } finally {
             setLoading(false);
         }
     };
 
+    const deleteDoctor = async (doctorId) => {
+        setLoading(true);
+        setError(null);
+        try {
+            await doctorsApi.deleteDoctorRequest(doctorId);
+            toast.success("Doctor deleted successfully!");
+            getDoctors();
+        } catch (error) {
+            console.error("Error deleting doctor:", error);
+            setError(error.response?.data?.message || "Failed to delete doctor");
+            toast.error("Failed to delete doctor.");
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+
     return (
-        <DoctorsContext.Provider value={{ doctors, loading, error, isAdmin, getDoctors, deactivateDoctor, activateDoctor }}>
+        <DoctorsContext.Provider value={{ doctors, loading, error, isAdmin, getDoctors, deactivateDoctor, activateDoctor, deleteDoctor }}>
             {children}
         </DoctorsContext.Provider>
     );
