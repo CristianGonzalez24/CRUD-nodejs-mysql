@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react'
+import { useDoctors } from '../../hooks/useDoctors.js';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import './DoctorFilter.css'
 
-const DoctorFilter = ({ doctors, searchTerm, setSearchTerm, selectedSpecialty, setSelectedSpecialty, selectedExperience, setSelectedExperience}) => {
-    const specializations = useMemo(() => [...new Set(doctors.map(doctor => doctor.specialty))], [doctors]);
+const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelectedSpecialty, selectedExperience, setSelectedExperience }) => {
+
+    const { specializations } = useDoctors();
 
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 

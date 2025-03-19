@@ -139,27 +139,20 @@ export const createDoctorInDB = async (doctor) => {
 export const getDoctorById = async (id) => {
     if (!id) {
         logger.warn("Doctor ID is required but was not provided.");
-        throw new Error("Doctor ID is required");
+        return null;
     }
 
     try {
         logger.info(`Fetching doctor with ID: ${id}`);
-
         const [rows] = await pool.query('SELECT * FROM doctors WHERE id = ?', [id]);
-
-        if (!rows || !Array.isArray(rows)) {
-            logger.error("Unexpected database response format for getDoctorById.");
-            throw new Error("Unexpected database response format");
-        }
-
         const doctor = rows[0] || null;
 
         if (!doctor) {
             logger.warn(`Doctor with ID ${id} not found.`);
-        } else {
-            logger.info(`Doctor found: ${JSON.stringify(doctor)}`);
+            return null;
         }
 
+        logger.info(`Doctor found: ${JSON.stringify(doctor)}`);
         return doctor;
     } catch (error) {
         logger.error(`Failed to retrieve doctor by ID ${id}. Error: ${error.message}`);

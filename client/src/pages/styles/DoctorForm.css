@@ -1,0 +1,119 @@
+.doctor-form-container{
+    max-width: 800px;
+    margin: 7rem auto 4rem;
+    padding: 2rem;
+}
+.form-header{
+    text-align: center;
+    margin-bottom: 3rem;
+}
+.form-header h1{
+    font-size: 2.5rem;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+.form-header p{
+    font-size: 1.125rem;
+    color: #666666;
+}
+.doctor-form{
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.form-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+.form-group{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.form-group label{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+.form-group input,
+.form-group select{
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    font-size: 1rem;
+    transition: outline 0.2s ease-in-out, outline-offset 0.2s ease-in-out;
+}
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+.form-group input.error,
+.form-group select.error {
+    border-color: var(--danger-color);
+}
+.error-message{
+    color: var(--danger-color);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.submit-error{
+    background-color: #fff5f5;
+    color: var(--danger-color);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.form-actions{
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+.form-actions button {
+    min-width: 120px;
+}
+/*Loading state style*/
+.form-actions button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+/*Hover effect*/
+.form-group input:hover:not(.error),
+.form-group select:hover:not(.error) {
+    border-color: var(--primary-color);
+}
+.form-group input:focus-visible,
+.form-group select:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+/* Custom select arrow */
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+    padding-right: 2.5rem;
+}
+/* Number input styles */
+.form-group input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+.form-group input[type="number"]::-webkit-outer-spin-button,
+.form-group input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

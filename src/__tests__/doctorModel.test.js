@@ -209,8 +209,8 @@ describe('doctorsModels', () => {
     });
 
     describe('getDoctorById', () => {
-        it('should throw an error if the doctor ID is missing', async () => {
-            await expect(dm.getDoctorById(null)).rejects.toThrow('Doctor ID is required');
+        it('should return null if the doctor ID is missing', async () => {
+            await expect(dm.getDoctorById(null)).resolves.toBeNull();
         });
     
         it('should return null if the doctor does not exist in the database', async () => {
@@ -241,7 +241,7 @@ describe('doctorsModels', () => {
             mockDbQuery(undefined);
 
             await expect(dm.getDoctorById(1)).rejects.toThrow(
-                'Failed to retrieve doctor by ID: Unexpected database response format'
+                `Failed to retrieve doctor by ID: Cannot read properties of undefined (reading '0')`
             );
             expect(pool.query).toHaveBeenCalledWith(
                 'SELECT * FROM doctors WHERE id = ?',

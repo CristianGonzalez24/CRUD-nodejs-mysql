@@ -14,7 +14,7 @@ export const validateSchema = (schema) => (req, res, next) => {
         }
 
         const validData = schema.parse(req.body);
-        req.body = validData;
+        req.validData = validData;
 
         logger.info(`Validation successful for ${req.originalUrl}`);
         next();

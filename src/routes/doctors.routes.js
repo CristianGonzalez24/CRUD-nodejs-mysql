@@ -8,6 +8,7 @@ const router = Router();
 
 router.get('/doctors', cacheMiddleware, dc.getDoctors);
 router.get('/doctors/all', cacheMiddleware, dc.getAllDoctors);
+router.get('/doctors/:id', cacheMiddleware, dc.getDoctorById);
 
 router.post('/doctors', validateSchema(doctorSchema), (req, res, next) => {
     clearCache();

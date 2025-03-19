@@ -55,16 +55,25 @@ const DoctorsPage = () => {
         return showInactive ? doctors.filter(doctor => doctor.is_active === 0) : [];
     }, [showInactive, doctors]);
 
-    const totalActivePages = Math.ceil(filteredDoctors.length / doctorsPerPage);
-    const totalInactivePages = Math.ceil(inactiveDoctors.length / doctorsPerPage);
-    const getCurrentPageItems = (items, page) => {
-        const startIndex = (page - 1) * doctorsPerPage;
-        return items.slice(startIndex, startIndex + doctorsPerPage);
-    };
+    const totalActivePages = useMemo(() => 
+        Math.ceil(filteredDoctors.length / doctorsPerPage), 
+        [filteredDoctors, doctorsPerPage]
+    );
 
-    
-    const currentActiveDoctors = getCurrentPageItems(filteredDoctors, activePage);
-    const currentInactiveDoctors = getCurrentPageItems(inactiveDoctors, inactivePage);
+    const totalInactivePages = useMemo(() => 
+    Math.ceil(inactiveDoctors.length / doctorsPerPage), 
+    [inactiveDoctors, doctorsPerPage]
+    );
+
+    const currentActiveDoctors = useMemo(() => {
+        const startIndex = (activePage - 1) * doctorsPerPage;
+        return filteredDoctors.slice(startIndex, startIndex + doctorsPerPage);
+    }, [filteredDoctors, activePage, doctorsPerPage]);
+
+    const currentInactiveDoctors = useMemo(() => {
+        const startIndex = (inactivePage - 1) * doctorsPerPage;
+        return inactiveDoctors.slice(startIndex, startIndex + doctorsPerPage);
+    }, [inactiveDoctors, inactivePage, doctorsPerPage]);
 
     useEffect(() => {
         setActivePage(1);
@@ -82,8 +91,7 @@ const DoctorsPage = () => {
                 </div>
 
                 <div className="filters-section">
-                    <DoctorFilter 
-                        doctors={doctors}
+                    <DoctorFilter
                         searchTerm={searchTerm}
                         setSearchTerm={setSearchTerm}
                         selectedSpecialty={selectedSpecialty}
@@ -105,7 +113,7 @@ const DoctorsPage = () => {
                         ))}
                         </div>
 
-                        {totalActivePages >= 1 && (
+                        {totalActivePages > 1 && (
                             <Pagination
                                 currentPage={activePage}
                                 totalPages={totalActivePages}
@@ -146,7 +154,7 @@ const DoctorsPage = () => {
                                     )}
                                 </div>
 
-                                {totalInactivePages >= 1 && (
+                                {totalInactivePages > 1 && (
                                     <Pagination
                                     currentPage={inactivePage}
                                     totalPages={totalInactivePages}

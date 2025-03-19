@@ -4,6 +4,7 @@ import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
 import HomePage from './pages/HomePage';
 import DoctorsPage from './pages/DoctorsPage';
+import DoctorForm from './pages/DoctorForm';
 import NotFound from './pages/NotFound';
 
 const ScrollToTop = () => {
@@ -23,6 +24,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/doctors" element={<DoctorsPage />} />
+        <Route path="/doctors-form" element={<DoctorForm />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />

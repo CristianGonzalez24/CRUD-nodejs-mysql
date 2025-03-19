@@ -45,7 +45,7 @@
 .error-circle::before, .error-circle::after{
     content: '';
     position: absolute;
-    background-color: rgba(0, 102, 204, 0.2);
+    background-color: rgba(0, 102, 204, 0.15);
     border-radius: 2px;
 }
 .error-circle::before{

@@ -7,33 +7,33 @@ export const getDoctors = async (req, res, next) => {
   const validLimit = parseInt(limit, 10);
   const validPage = parseInt(page, 10);
 
-  if (!Number.isInteger(validLimit) || validLimit <= 0 || !Number.isInteger(validPage) || validPage <= 0) {
+  if (isNaN(validPage) || isNaN(validLimit) || validPage <= 0 || validLimit < 0) {
     logger.warn(`Invalid parameters: limit=${limit}, page=${page}`);
     return next({
-      message: "Both 'limit' and 'page' must be positive integers",
+      message: "Limit and page must be positive integers (limit can be 0 for all active doctors)",
       status: 400,
     });
   }
 
   try {
-    const [doctors, totalDoctors] = await Promise.all([
-      dm.getActiveDoctors(validLimit, (validPage - 1) * validLimit),
-      dm.countActiveDoctors(),
-    ]);
+    const totalDoctors = await dm.countActiveDoctors();
+    const finalLimit = validLimit === 0 ? totalDoctors : validLimit;
 
-    logger.info(`Retrieved ${doctors.length} active doctors (page ${validPage}, limit ${validLimit}).`);
+    const doctors = await dm.getActiveDoctors(finalLimit, (validPage - 1) * finalLimit);
+
+    logger.info(`Retrieved ${doctors.length} active doctors (page ${validPage}, limit ${finalLimit}).`);
 
     res.status(200).json({
       message: "Active doctors retrieved successfully",
       total: totalDoctors,
-      totalPages: Math.ceil(totalDoctors / validLimit),
+      totalPages: Math.ceil(totalDoctors / finalLimit),
       data: doctors,
       page: validPage,
-      limit: validLimit,
+      limit: finalLimit,
     });
   } catch (error) {
     logger.error(`Error retrieving active doctors: ${error.message}`);
-    next(error);
+    return next(error);
   }
 };
 
@@ -43,39 +43,69 @@ export const getAllDoctors = async (req, res, next) => {
   const validPage = parseInt(page, 10);
   const validLimit = parseInt(limit, 10);
 
-  if (isNaN(validPage) || isNaN(validLimit) || validPage <= 0 || validLimit <= 0) {
+  if (isNaN(validPage) || isNaN(validLimit) || validPage <= 0 || validLimit < 0) {
     logger.warn(`Invalid parameters: limit=${limit}, page=${page}`);
     return next({
-      message: "Limit and page must be positive integers",
+      message: "Limit and page must be positive integers (limit can be 0 for all doctors)",
       status: 400,
     });
   }
 
   try {
-    const [doctors, totalDoctors] = await Promise.all([
-      dm.getAllDoctorsFromDB(validLimit, (validPage - 1) * validLimit),
-      dm.countAllDoctors(),
-    ]);
+    const totalDoctors = await dm.countAllDoctors();
+    const finalLimit = validLimit === 0 ? totalDoctors : validLimit;
 
-    logger.info(`Retrieved ${doctors.length} doctors (page ${validPage}, limit ${validLimit}).`);
+    const doctors = await dm.getAllDoctorsFromDB(finalLimit, (validPage - 1) * finalLimit);
+
+    logger.info(`Retrieved ${doctors.length} doctors (page ${validPage}, limit ${finalLimit}).`);
 
     res.status(200).json({
       message: "All doctors retrieved successfully",
       total: totalDoctors,
-      totalPages: Math.ceil(totalDoctors / validLimit),
+      totalPages: Math.ceil(totalDoctors / finalLimit),
       data: doctors,
       page: validPage,
-      limit: validLimit,
+      limit: finalLimit,
     });
   } catch (error) {
     logger.error(`Error retrieving all doctors: ${error.message}`);
-    next(error);
+    return next(error);
   }
+};
+
+export const getDoctorById = async (req, res, next) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {  
+    logger.warn(`Invalid doctor ID: ${id}`);  
+    return next({ message: "Invalid doctor ID", status: 400 });
+  }
+  
+  try {
+    const doctor = await dm.getDoctorById(id);  
+
+    if (!doctor) {  
+      logger.warn(`Doctor with ID ${id} not found.`);  
+      return next({
+        message: `Doctor with ID ${id} not found`,  
+        status: 404,  
+      });  
+    }  
+
+    logger.info(`Retrieved doctor with ID ${id}.`);  
+    res.status(200).json({
+      message: "Doctor retrieved successfully",  
+      data: doctor,  
+    });  
+  } catch (error) {  
+    logger.error(`Error retrieving doctor with ID ${id}: ${error.message}`);  
+    return next(error);  
+  }  
 };
 
 export const createDoctor = async (req, res, next) => {
   const doctor = req.validData;
-
+  
   if (!doctor) {
     logger.warn("Doctor object is invalid or missing required fields.");
     return next({
@@ -120,20 +150,17 @@ export const createDoctor = async (req, res, next) => {
   });
   } catch (error) {
     logger.error(`Error creating doctor: ${error.message}`);
-    next(error);
+    return next(error);
   }
 };
 
 export const deactivateDoctor = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
-    if (!id || isNaN(id) || parseInt(id, 10) <= 0) {
-      logger.warn(`Invalid doctor ID: ${id}`);
-      return next({
-        message: "Doctor ID must be a positive integer",
-        status: 400,
-      });
+    if (!Number.isInteger(id) || id <= 0) {  
+      logger.warn(`Invalid doctor ID: ${id}`);  
+      return next({ message: "Invalid doctor ID", status: 400 });
     }
 
     const existingDoctor = await dm.getDoctorById(id);
@@ -162,20 +189,17 @@ export const deactivateDoctor = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(`Error deactivating doctor: ${error.message}`);
-    next(error);
+    return next(error);
   }
 };
 
 export const activateDoctor = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
-    if (!id || isNaN(id) || parseInt(id, 10) <= 0) {
-      logger.warn(`Invalid doctor ID: ${id}`);
-      return next({
-        message: "Doctor ID must be a positive integer",
-        status: 400,
-      });
+    if (!Number.isInteger(id) || id <= 0) {  
+      logger.warn(`Invalid doctor ID: ${id}`);  
+      return next({ message: "Invalid doctor ID", status: 400 });
     }
 
     const existingDoctor = await dm.getDoctorById(id);
@@ -205,13 +229,13 @@ export const activateDoctor = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(`Error activating doctor: ${error.message}`);
-    next(error);
+    return next(error);
   }
 };
 
 export const updateDoctor = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
     const {
       first_name,
       last_name,
@@ -221,13 +245,10 @@ export const updateDoctor = async (req, res, next) => {
       years_of_experience,
       is_active,
     } = req.body;
-
-    if (!id || isNaN(id) || parseInt(id, 10) <= 0) {
-      logger.warn(`Invalid doctor ID: ${id}`);
-      return next({
-        message: "Doctor ID must be a positive integer",
-        status: 400,
-      });
+    
+    if (!Number.isInteger(id) || id <= 0) {  
+      logger.warn(`Invalid doctor ID: ${id}`);  
+      return next({ message: "Invalid doctor ID", status: 400 });
     }
 
     const existingDoctor = await dm.getDoctorById(id);
@@ -285,20 +306,17 @@ export const updateDoctor = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(`Failed to update doctor. Error: ${error.message}`);
-    next(error);
+    return next(error);
   }
 };
 
 export const deleteDoctor = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
-    if (!id || isNaN(id) || parseInt(id, 10) <= 0) {
-      logger.warn(`Invalid doctor ID: ${id}`);
-      return next({
-        message: "Doctor ID must be a positive integer",
-        status: 400,
-      });
+    if (!Number.isInteger(id) || id <= 0) {  
+      logger.warn(`Invalid doctor ID: ${id}`);  
+      return next({ message: "Invalid doctor ID", status: 400 });
     }
 
     const existingDoctor = await dm.getDoctorById(id);
@@ -326,6 +344,6 @@ export const deleteDoctor = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(`Failed to delete doctor. Error: ${error.message}`);
-    next(error);
+    return next(error);
   }
 };
