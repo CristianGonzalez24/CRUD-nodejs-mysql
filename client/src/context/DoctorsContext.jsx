@@ -11,14 +11,6 @@ export const DoctorsProvider = ({ children }) => {
     const [specializations, setSpecializations] = useState([]);
     const [isAdmin, setIsAdmin] = useState(true);
 
-    useEffect(() => {
-        if (doctors.length === 0) {
-            getDoctors();
-        }
-        const uniqueSpecializations = [...new Set(doctors.map(doctor => doctor.specialty))];
-        setSpecializations(uniqueSpecializations);
-    }, [doctors]);
-
     const getDoctors = useCallback(async () => {
         setLoading(true);
         setErrors(null);
@@ -28,6 +20,8 @@ export const DoctorsProvider = ({ children }) => {
             const response = isAdmin ? await doctorsApi.getAllDoctorsRequest() : await doctorsApi.getDoctorsRequest();
             if (isMounted) {
                 setDoctors(response.data.data);
+                const uniqueSpecializations = [...new Set(response.data.data.map(doctor => doctor.specialty))];
+                setSpecializations(uniqueSpecializations);
             }
         } catch (error) {
             if(isMounted) {
@@ -121,8 +115,71 @@ export const DoctorsProvider = ({ children }) => {
         }
     };
 
+    const fetchDoctorById = async (doctorId) => {
+        setLoading(true);
+        setErrors(null);
+        try {
+            const response = await doctorsApi.getDoctorByIdRequest(doctorId);
+            return { success: true, doctor: response.data.data };
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || "Failed to fetch doctor. Please try again later";
+            setErrors(errorMessage);
+            toast.error(errorMessage);
+            return { success: false, error: errorMessage };
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const updateDoctor = async (doctorId, doctorData) => {
+        setLoading(true);
+        setErrors(null);
+        try {
+            const formattedDoctorData = {
+                first_name: doctorData.firstName,
+                last_name: doctorData.lastName,
+                specialty: doctorData.specialization,
+                phone: doctorData.phone,
+                email: doctorData.email,
+                years_of_experience: Number(doctorData.experience)
+            };
+
+            const response = await doctorsApi.updateDoctorRequest(doctorId, formattedDoctorData);
+            getDoctors();
+            return { success: true, data: response.data.data };
+        } catch (error) {
+            const errorMessage = error.response?.data?.error?.message || "Failed to update doctor. Please try again";
+            setErrors(errorMessage);
+            toast.error(errorMessage);
+            return { success: false, error: errorMessage };
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (doctors.length === 0) {
+            getDoctors();
+        }
+    }, [doctors.length, getDoctors]);
+
+    console.log(doctors);
+
     return (
-        <DoctorsContext.Provider value={{ doctors, loading, errors ,specializations, isAdmin, getDoctors, deactivateDoctor, activateDoctor, deleteDoctor, addDoctor }}>
+        <DoctorsContext.Provider value={{
+            doctors,
+            loading,
+            errors,
+            specializations,
+            isAdmin,
+            getDoctors,
+            deactivateDoctor,
+            activateDoctor,
+            deleteDoctor,
+            addDoctor,
+            fetchDoctorById,
+            updateDoctor
+        }}>
             {children}
         </DoctorsContext.Provider>
     );

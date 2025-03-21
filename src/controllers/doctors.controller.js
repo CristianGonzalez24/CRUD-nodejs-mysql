@@ -244,7 +244,7 @@ export const updateDoctor = async (req, res, next) => {
       email,
       years_of_experience,
       is_active,
-    } = req.body;
+    } = req.validData;
     
     if (!Number.isInteger(id) || id <= 0) {  
       logger.warn(`Invalid doctor ID: ${id}`);  

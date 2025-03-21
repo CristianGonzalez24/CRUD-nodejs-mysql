@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link } from "react-router";
 import { useDoctors } from '../../hooks/useDoctors.js';
 import Slider from "react-slick";
@@ -9,11 +9,7 @@ import DoctorCard from '../DoctorCard/DoctorCard';
 import LoadingSpinner from '../LoadingSpinner/LoadingSpinner';
 
 const DoctorSection = () => {
-    const { doctors, loading, getDoctors } = useDoctors();
-
-    useEffect(() => {
-        getDoctors();
-    }, [getDoctors]);
+    const { doctors, loading } = useDoctors();
 
     const settings = useMemo(() => ({
         dots: true,

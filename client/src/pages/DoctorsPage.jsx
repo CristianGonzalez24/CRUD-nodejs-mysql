@@ -18,15 +18,9 @@ const DoctorsPage = () => {
 
     const doctorsPerPage = 8;
 
-    const fetchDoctors = useCallback(() => {
-        if (doctors.length === 0) {
-            getDoctors();
-        }
-    }, [doctors.length, getDoctors]);
-
     useEffect(() => {
-        fetchDoctors();
-    }, [fetchDoctors]);
+        getDoctors();
+    }, [getDoctors]);
 
     const filteredDoctors = useMemo(() => {
         const lowerSearchTerm = searchTerm.toLowerCase();
@@ -75,6 +69,11 @@ const DoctorsPage = () => {
         return inactiveDoctors.slice(startIndex, startIndex + doctorsPerPage);
     }, [inactiveDoctors, inactivePage, doctorsPerPage]);
 
+    const handlePageChange = (newPage) => {
+        setActivePage(newPage);
+        window.scrollTo(0, 0);
+    };
+
     useEffect(() => {
         setActivePage(1);
     }, [searchTerm, selectedSpecialty, selectedExperience]);
@@ -117,7 +116,7 @@ const DoctorsPage = () => {
                             <Pagination
                                 currentPage={activePage}
                                 totalPages={totalActivePages}
-                                onPageChange={setActivePage}
+                                onPageChange={handlePageChange}
                             />
                         )}
                     </>

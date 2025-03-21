@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from "react-router";
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from "react-router";
 import { useDoctors } from '../hooks/useDoctors.js';
+import { toast } from 'react-toastify';
 import ConfirmationModal from '../components/ConfirmationModal/ConfirmationModal';
 import { User, Phone, Mail, ClipboardPlus, Award, AlertCircle } from 'lucide-react';
 import './styles/DoctorForm.css'
@@ -20,9 +21,13 @@ const specializations = [
 
 const DoctorForm = () => {
 
-    const { specializations, addDoctor } = useDoctors();
+    const { specializations, addDoctor, fetchDoctorById, updateDoctor } = useDoctors();
 
     const navigate = useNavigate();
+
+    const { id } = useParams();
+    const isEditing = !!id;
+
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -36,6 +41,29 @@ const DoctorForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formErrors, setFormErrors] = useState({});
     const [createdDoctorName, setCreatedDoctorName] = useState('');
+
+    useEffect(() => {
+        if (id) {
+            fetchDoctorById(id).then(response => {
+                if (response.success) {
+                    const doctorData = response.doctor;
+
+                    const formattedDoctorData = {
+                        firstName: doctorData.first_name,
+                        lastName: doctorData.last_name,
+                        specialization: doctorData.specialty,
+                        phone: doctorData.phone,
+                        email: doctorData.email,
+                        experience: String(doctorData.years_of_experience)
+                    }
+
+                    setFormData(formattedDoctorData);
+                }
+            }).catch(error => {
+                console.error("Error fetching doctor:", error);
+            });
+        }
+    }, [id]);
 
     const validateForm = () => {
         const newErrors = {};
@@ -107,26 +135,36 @@ const DoctorForm = () => {
         setIsSubmitting(true);
         setFormErrors(prev => ({ ...prev, submit: '' }));
 
-        const result = await addDoctor(formData);
+        let result;
+
+        if (isEditing) {
+            result = await updateDoctor(id, formData);
+        } else {
+            result = await addDoctor(formData);
+        }
 
         if (result.success) {
-            setCreatedDoctorName(`${formData.firstName} ${formData.lastName}`);
-            setModalType('success');
-            setFormData({
-                firstName: '',
-                lastName: '',
-                specialization: '',
-                phone: '',
-                email: '',
-                experience: ''
-            });
+            if (isEditing) {
+                toast.success("Doctor updated successfully!");
+                navigate('/doctors');
+            } else {
+                setCreatedDoctorName(`${formData.firstName} ${formData.lastName}`);
+                setModalType('success');
+                setFormData({
+                    firstName: '',
+                    lastName: '',
+                    specialization: '',
+                    phone: '',
+                    email: '',
+                    experience: ''
+                });         
+            }
         } else {
             setFormErrors(prev => ({
                 ...prev,
                 submit: result.error
             }));
         }
-
         setIsSubmitting(false);
     };
     const handleCancel = () => {
@@ -327,7 +365,7 @@ const DoctorForm = () => {
                         aria-busy={isSubmitting}
                         aria-disabled={isSubmitting || Object.values(formErrors).some(error => error)}
                     >
-                        {isSubmitting ? 'Creating...' : 'Create Doctor'}
+                        {isSubmitting ? "Processing..." : isEditing ? "Update Doctor" : "Create Doctor"}
                     </button>
                 </div>
             </form>
