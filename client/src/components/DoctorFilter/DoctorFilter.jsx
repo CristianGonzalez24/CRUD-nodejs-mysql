@@ -3,7 +3,7 @@ import { useDoctors } from '../../hooks/useDoctors.js';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import './DoctorFilter.css'
 
-const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelectedSpecialty, selectedExperience, setSelectedExperience }) => {
+const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelectedSpecialty, selectedExperience, setSelectedExperience, hideExperience }) => {
 
     const { specializations } = useDoctors();
 
@@ -55,19 +55,23 @@ const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelecte
                     ))}
                 </select>
                 
-                <label htmlFor="experience-filter" className="visually-hidden">Filter by experience</label>
-                <select
-                    id="experience-filter"
-                    className="filter-select"
-                    value={selectedExperience}
-                    onChange={(e) => setSelectedExperience(e.target.value)}
-                >
-                    {experienceRanges.map(range => (
-                        <option key={range.label} value={range.value}>
-                            {range.label}
-                        </option>
-                    ))}
-                </select>
+                {!hideExperience && ( 
+                    <>
+                    <label htmlFor="experience-filter" className="visually-hidden">Filter by experience</label>
+                    <select
+                        id="experience-filter"
+                        className="filter-select"
+                        value={selectedExperience}
+                        onChange={(e) => setSelectedExperience(e.target.value)}
+                    >
+                        {experienceRanges.map(range => (
+                            <option key={range.label} value={range.value}>
+                                {range.label}
+                            </option>
+                        ))}
+                    </select>
+                    </>
+                )}
             </div>
         </div>
     )

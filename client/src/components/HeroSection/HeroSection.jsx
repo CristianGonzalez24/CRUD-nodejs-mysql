@@ -1,11 +1,25 @@
 import { useState } from 'react'
-import { Link } from "react-router";
+import { useDoctors } from '../../hooks/useDoctors.js';
+import { useNavigate } from "react-router";
 import { ArrowRight } from 'lucide-react';
 import './HeroSection.css'
 import EmergencyModal from '../EmergencyModal/EmergencyModal';
+import { toast } from 'react-toastify';
 
 const HeroSection = () => {
+    const { isLoggedIn } = useDoctors();
+
     const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+    const navigate = useNavigate();
+
+    const handleBookingClick = () => {
+        if (isLoggedIn) {
+            navigate("/book-appointment");
+        } else {
+            toast.warning("You must be logged in to book an appointment.");
+            navigate("/login");
+        }
+    };
 
     return (
         <section className="hero" id="home">
@@ -20,10 +34,10 @@ const HeroSection = () => {
                     </p>
 
                     <div className="hero-buttons">
-                        <Link to="/appointments" className="btn btn-primary" aria-label="Book an appointment">
+                        <button onClick={handleBookingClick} className="btn btn-primary" aria-label="Book an appointment">
                         Book Appointment
                         <ArrowRight size={20} />
-                        </Link>
+                        </button>
                         <button 
                         className="btn btn-danger emergency-btn"
                         onClick={() => setIsEmergencyModalOpen(true)}

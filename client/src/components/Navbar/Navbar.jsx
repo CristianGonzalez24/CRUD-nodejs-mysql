@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
+import { useDoctors } from '../../hooks/useDoctors.js';
 import { Link as RouterLink } from "react-router";
 import { Link } from "react-scroll";
 import { Menu, X, Stethoscope } from 'lucide-react';
 import './navbar.css'
 
 const Navbar = () => {
+    const { isLoggedIn } = useDoctors();
+
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
 
@@ -46,7 +49,14 @@ const Navbar = () => {
                     <Link to="services" smooth={true} duration={500} className="navbar-link">Services</Link>
                     <Link to="doctors" smooth={true} duration={500} className="navbar-link">Doctors</Link>
                     <Link to="contact" smooth={true} duration={500} className="navbar-link">Contact</Link>
-                    <button className="btn btn-primary">Book Appointment</button>
+                    { isLoggedIn ? (
+                        <RouterLink to="/book-appointment" aria-label="Book an appointment" className="btn btn-primary">Book Appointment</RouterLink>
+                    ) : (
+                        <div className="auth-buttons">
+                            <button className="btn btn-secondary">Login</button>
+                            <button className="btn btn-primary">Register</button>
+                        </div>
+                    )}
                 </div>
 
                 {isOpen && (
@@ -59,7 +69,14 @@ const Navbar = () => {
                     <Link to="services" smooth={true} duration={500} onClick={() => setIsOpen(false)}>Services</Link>
                     <Link to="doctors" smooth={true} duration={500} onClick={() => setIsOpen(false)}>Doctors</Link>
                     <Link to="contact" smooth={true} duration={500} onClick={() => setIsOpen(false)}>Contact</Link>
-                    <button className="btn btn-primary">Book Appointment</button>
+                    { isLoggedIn ? (
+                        <RouterLink to="/book-appointment" aria-label="Book an appointment" className="btn btn-primary">Book Appointment</RouterLink>
+                    ) : (
+                        <div className="auth-buttons">
+                            <button className="btn btn-secondary">Login</button>
+                            <button className="btn btn-primary">Register</button>
+                        </div>
+                    )}
                 </div>
                 )}
             </div>

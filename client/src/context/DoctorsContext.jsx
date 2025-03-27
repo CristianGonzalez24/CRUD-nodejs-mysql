@@ -9,7 +9,8 @@ export const DoctorsProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState(null);
     const [specializations, setSpecializations] = useState([]);
-    const [isAdmin, setIsAdmin] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(true);
 
     const getDoctors = useCallback(async () => {
         setLoading(true);
@@ -163,8 +164,6 @@ export const DoctorsProvider = ({ children }) => {
         }
     }, [doctors.length, getDoctors]);
 
-    console.log(doctors);
-
     return (
         <DoctorsContext.Provider value={{
             doctors,
@@ -172,6 +171,7 @@ export const DoctorsProvider = ({ children }) => {
             errors,
             specializations,
             isAdmin,
+            isLoggedIn,
             getDoctors,
             deactivateDoctor,
             activateDoctor,

@@ -97,6 +97,7 @@ const DoctorsPage = () => {
                         setSelectedSpecialty={setSelectedSpecialty}
                         selectedExperience={selectedExperience}
                         setSelectedExperience={setSelectedExperience}
+                        hideExperience={false}
                     />
                 </div>
 

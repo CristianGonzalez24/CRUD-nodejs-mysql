@@ -6,6 +6,8 @@ import HomePage from './pages/HomePage';
 import DoctorsPage from './pages/DoctorsPage';
 import DoctorForm from './pages/DoctorForm';
 import NotFound from './pages/NotFound';
+import ProtectedRoute from './ProtectedRoute';
+import AppointmentPage from './pages/AppointmentPage';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -24,8 +26,13 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/doctors" element={<DoctorsPage />} />
-        <Route path="/doctors/create" element={<DoctorForm />} />
-        <Route path="/doctors/edit/:id" element={<DoctorForm />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/doctors/create" element={<DoctorForm />} />
+          <Route path="/doctors/edit/:id" element={<DoctorForm />} />
+        </Route>
+        
+        <Route path="/book-appointment" element={<AppointmentPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
