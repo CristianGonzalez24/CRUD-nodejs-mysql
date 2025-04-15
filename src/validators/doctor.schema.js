@@ -3,10 +3,12 @@ import { z } from "zod";
 export const doctorSchema = z.object({
     first_name: z
         .string({required_error: 'First name is required'})
+        .trim()
         .min(3, {message: 'First name must be at least 3 characters long'})
         .max(30, "First name must be 30 characters or less"),
     last_name: z
         .string({required_error: 'Last name is required'})
+        .trim()
         .min(3, {message: 'Last name must be at least 3 characters long'})
         .max(30, "Last name must be 30 characters or less"),
     specialty: z
@@ -29,6 +31,6 @@ export const doctorSchema = z.object({
         .nonnegative("Years of experience must be a positive number")
         .optional(),
     is_active: z
-        .boolean()
+        .boolean({invalid_type_error: "Is active must be a boolean"})
         .optional(),
 });

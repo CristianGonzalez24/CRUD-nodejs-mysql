@@ -1,17 +1,18 @@
-import { loadEnvFile } from 'node:process';
 import express from 'express'
 import helmet from 'helmet';
 import compression from "compression";
 import { limiter } from './config/rateLimit.js';
 import cors from 'cors';
 import { corsOptions } from './config/corsOptions.js';
+import cookieParser from 'cookie-parser';
+import authRoutes from './routes/auth.routes.js'
 import doctorsRoutes from './routes/doctors.routes.js'
 import { errorHandler } from './middlewares/errorHandler.js';
 import { PORT } from './config/config.js';
 import logger from './config/logger.js';
-import setupSwagger from './config/swagger.js';
+import setupSwagger from './docs/setupSwagger.js';
 
-loadEnvFile();
+process.loadEnvFile();
 
 if (!process.env.NODE_ENV || !PORT) {
     logger.error('Environment variables not configured properly.');
@@ -26,12 +27,15 @@ app.use(helmet());
 app.use(compression({ level: 6 }));
 app.use(limiter);
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use((req, res, next) => {
     logger.info(`${req.method} ${req.url}`);
     next();
 });
+
 // Routes
 app.use('/api', doctorsRoutes);
+app.use('/api', authRoutes);
 
 // Middleware for errors
 app.use(errorHandler);

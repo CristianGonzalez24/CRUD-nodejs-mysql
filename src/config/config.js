@@ -1,3 +1,7 @@
+// import { loadEnvFile } from 'node:process';
+
+process.loadEnvFile();
+
 export const database = {
     connectionLimit: 10,
     host: process.env.DB_HOST || 'localhost',

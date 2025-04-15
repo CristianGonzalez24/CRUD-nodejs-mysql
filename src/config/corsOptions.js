@@ -1,6 +1,6 @@
-import { loadEnvFile } from 'node:process';
+// import { loadEnvFile } from 'node:process';
 
-loadEnvFile();
+process.loadEnvFile();
 
 const allowedOrigins =
     process.env.NODE_ENV === 'production'
@@ -12,7 +12,6 @@ export const corsOptions = {
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            console.error("Blocked by CORS:", origin);
             callback(new Error('Not allowed by CORS'));
         }
     },

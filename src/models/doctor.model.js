@@ -123,8 +123,8 @@ export const createDoctorInDB = async (doctor) => {
             ]
         );
 
-        if (!result.insertId) {
-            logger.error("Failed to create doctor: insertId is null.");
+        if (!result || result.affectedRows === 0) {
+            logger.error("Failed to create doctor: No rows affected");
             return null;
         }
 

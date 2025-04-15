@@ -1,9 +1,9 @@
 export const doctorDocs = {
   "/doctors": {
     get: {
+      tags: ["Doctors"],
       summary: "Get a paginated list of active doctors",
       description: "Retrieves a list of active doctors with pagination. The limit and page query parameters define the number of doctors returned per page.",
-      tags: ["Doctors"],
       parameters: [
         {
           in: "query",
