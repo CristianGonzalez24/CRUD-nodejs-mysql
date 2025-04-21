@@ -9,6 +9,8 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AppointmentPage from "./pages/AppointmentPage";
 import AuthRoute from "./routes/AuthRoute";
+import RegisterPage from "./pages/RegisterPage";
+import TermsAndConditions from './pages/TermsAndConditions';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -28,6 +30,7 @@ function App() {
       <Route path="/" element={<HomePage />}/>
       <Route path="/doctors" element={<DoctorsPage />}/>
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/terms" element={<TermsAndConditions />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/doctors/create" element={<DoctorForm />}/>

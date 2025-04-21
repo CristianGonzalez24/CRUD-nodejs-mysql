@@ -10,7 +10,7 @@ export const DoctorsProvider = ({ children }) => {
     const [errors, setErrors] = useState(null);
     const [specializations, setSpecializations] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const getDoctors = useCallback(async () => {
         setLoading(true);

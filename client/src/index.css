@@ -179,6 +179,16 @@ body {
     .time-slots {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
+    /*Register Page*/
+    .register-container {
+        padding: 1rem;
+    }
+    .register-card {
+        padding: 1.5rem;
+    }
+    .register-header h1 {
+        font-size: 1.75rem;
+    }
 }
 @media (max-width: 640px) {
     .emergency-modal {
@@ -328,5 +338,37 @@ body {
     .time-slot {
         padding: 0.5rem;
         font-size: 0.9rem;
+    }
+    /*Register Page*/
+    .register-card {
+        padding: 1.25rem;
+    }
+    
+    .social-btn {
+        font-size: 0.9rem;
+    }
+    .social-btn box-icon {
+        width: 20px;
+        height: 20px;
+    }
+    /*Alert Message*/
+    .alert-message {
+        font-size: 0.8rem;
+    }
+}
+@media (prefers-contrast: high) {
+    .form-group input,
+    .form-group select {
+        border-width: 2px;
+    }
+    .checkbox-label input[type="checkbox"] {
+        border-width: 3px;
+    }
+    .error-text,
+    .submit-error {
+        color: #d00;
+    }
+    .success-message {
+        color: #060;
     }
 }

@@ -54,7 +54,7 @@ const Navbar = () => {
                     ) : (
                         <div className="auth-buttons">
                             <button className="btn btn-secondary">Login</button>
-                            <button className="btn btn-primary">Register</button>
+                            <RouterLink to="/register" aria-label="Register" className="btn btn-primary">Register</RouterLink>
                         </div>
                     )}
                 </div>
@@ -74,7 +74,7 @@ const Navbar = () => {
                     ) : (
                         <div className="auth-buttons">
                             <button className="btn btn-secondary">Login</button>
-                            <button className="btn btn-primary">Register</button>
+                            <RouterLink to="/register" aria-label="Register" className="btn btn-primary">Register</RouterLink>
                         </div>
                     )}
                 </div>

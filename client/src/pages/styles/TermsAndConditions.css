@@ -1,0 +1,34 @@
+.terms-container{
+    max-width: 800px;
+    margin: 3rem auto 0;
+    padding: 2rem;
+    color: #333;
+}
+.terms-container h1{
+    margin-bottom: 1.5rem;
+    font-size: 2.5rem;
+    color: var(--text-color);
+}
+.terms-container h2{
+    font-size: 1.3rem;
+    color: var(--text-color);
+    margin-top: 1.5rem;
+}
+.terms-container p {
+    margin-bottom: 1rem;
+}
+.terms-container a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.terms-container a:hover {
+    text-decoration: underline;
+}
+.last-updated {
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 2rem;
+    text-align: right;
+}

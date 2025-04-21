@@ -68,7 +68,7 @@
     align-items: center;
     gap: 0.25rem;
 }
-.submit-error{
+/* .submit-error{
     background-color: #fff5f5;
     color: var(--danger-color);
     padding: 1rem;
@@ -77,7 +77,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-}
+} */
 .form-actions{
     display: flex;
     justify-content: flex-end;

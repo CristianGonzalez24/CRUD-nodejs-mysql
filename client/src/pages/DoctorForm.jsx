@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import { useDoctors } from '../hooks/useDoctors.js';
 import { toast } from 'react-toastify';
 import ConfirmationModal from '../components/ConfirmationModal/ConfirmationModal';
+import AlertMessage from '../components/AlertMessage/AlertMessage';
 import { User, Phone, Mail, ClipboardPlus, Award, AlertCircle } from 'lucide-react';
 import './styles/DoctorForm.css'
 
@@ -121,16 +122,7 @@ const DoctorForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!validateForm()) {
-            setFormErrors(prev => ({
-                ...prev,    
-                submit: ''
-            }))
-
-            const firstError = document.querySelector('.error-message');
-            firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
+        if (!validateForm()) return;
     
         setIsSubmitting(true);
         setFormErrors(prev => ({ ...prev, submit: '' }));
@@ -342,10 +334,11 @@ const DoctorForm = () => {
                 </div>
 
                 {formErrors.submit && (
-                    <div className="submit-error">
-                        <AlertCircle size={18} />
-                        {formErrors.submit}
-                    </div>
+                        <AlertMessage
+                            type="error"
+                            message={formErrors.submit}
+                            duration={6000}
+                        />
                 )}
 
                 <div className="form-actions">
