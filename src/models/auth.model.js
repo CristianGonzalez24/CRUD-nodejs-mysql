@@ -1,32 +1,26 @@
 import logger from '../config/logger.js';
 import { pool } from "../config/db.js";
 
-export const checkDuplicateUser = async (username, email) => {
-    try {        
-        logger.info(`Checking for duplicate user with username: ${username}, email: ${email}`);
+
+export const checkDuplicateUser = async (email) => {
+    try {
+        logger.info(`Checking for duplicate user with email: ${email}`);
 
         const [rows] = await pool.query(
-            `SELECT username, email FROM users 
-            WHERE username = ? OR email = ?`,
-            [username, email]
-        );     
+        "SELECT 1 FROM users WHERE email = ? LIMIT 1",
+        [email]
+        );
 
-        const duplicates = {};
-        
-        for (const row of rows) {
-            if (row.username === username) duplicates.username = true;
-            if (row.email === email) duplicates.email = true;
-        }
-
-        if (Object.keys(duplicates).length > 0) {
-            logger.warn(`Duplicate fields found: ${JSON.stringify(duplicates)}`);
-            return duplicates;
+        if (rows.length > 0) {
+        logger.warn(`Duplicate user found for email: ${email}`);
+        return { email: true };
         }
 
         logger.info("No duplicate user found.");
-        return null;      
+        return null;
+
     } catch (error) {
-        logger.error(`Database query failed in checkDuplicateUser. Error: ${error.message}`);        
+        logger.error(`Database query failed in checkDuplicateUser. Error: ${error.message}`);
         throw new Error("Database query failed in checkDuplicateUser");
     }
 };
@@ -60,31 +54,41 @@ export const registerUserInDB = async (username, email, password, role) => {
     }
 };
 
-export const getUserByEmail = async (email) => {    
-    try {        
-        logger.info(`Fetching user by email: ${email}`);        
-        
+export const getUserByEmail = async (email, options = {}) => {
+    const {
+        includePassword = false,   
+        updateLastLogin = false    
+    } = options;
+
+    try {
+        logger.info(`Fetching user by email: ${email}`);
+
+        const fields = includePassword 
+            ? 'id, username, email, password, role, is_active' 
+            : 'id, username, email, role, is_active';
+
         const [rows = []] = await pool.query(
-            `SELECT id, username, email, password, role, is_active FROM users WHERE email = ? LIMIT 1`, 
+            `SELECT ${fields} FROM users WHERE email = ? LIMIT 1`,
             [email]
-        );    
-        
-        if (!Array.isArray(rows) || rows.length === 0) {            
-            logger.warn(`No user found with email: ${email}`);            
-            return null;        
-        }
-        
-        const user = rows[0];  
+        );
 
-        if (user.is_active) {
-            logger.info(`Updated last_login for user: ${user.email}`);
+        if (!Array.isArray(rows) || rows.length === 0) {
+            logger.warn(`No user found with email: ${email}`);
+            return null;
+        }
+
+        const user = rows[0];
+
+        if (updateLastLogin && user.is_active) {
             await pool.query(`UPDATE users SET last_login = NOW() WHERE id = ?`, [user.id]);
+            logger.info(`Updated last_login for user: ${user.email}`);
         }
 
-        logger.info(`Fetched user: ${JSON.stringify({ ...user, password: "HIDDEN" })}`);
-        return user;        
+        logger.info(`Fetched user: ${JSON.stringify({ ...user, password: includePassword ? "HIDDEN" : undefined })}`);
+        return user;
+
     } catch (error) {
-        logger.error(`Database query failed in getUserByEmail. Error: ${error.message}`);        
+        logger.error(`Database query failed in getUserByEmail. Error: ${error.message}`);
         throw new Error("Database query failed in getUserByEmail");
     }
 };

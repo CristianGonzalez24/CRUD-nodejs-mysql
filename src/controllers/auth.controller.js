@@ -6,7 +6,7 @@ import { generateToken } from '../utils/jwt.js';
 process.loadEnvFile();
 
 export const registerUser = async (req, res, next) => {   
-    const { username, email, password } = req.validData;
+    const { username, email, password, role } = req.validData;
 
     if (!username || !email || !password) {    
         logger.warn(`Invalid registration data received`);    
@@ -17,12 +17,12 @@ export const registerUser = async (req, res, next) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const existingFields = await am.checkDuplicateUser(username, email);
+        const existingFields = await am.checkDuplicateUser(email);
         if (existingFields !== null) {
-            logger.warn(`Username or email already taken: ${JSON.stringify(existingFields)}`);
+            logger.warn(`Email already taken: ${email}`);
             return next({
                 status: 400,
-                message: "Username or email already taken",
+                message: "Email already taken",
                 details: existingFields,
             });
         }
@@ -41,10 +41,7 @@ export const registerUser = async (req, res, next) => {
 
         logger.info(`User registered successfully: ${JSON.stringify(newUser)}`);
 
-        res.status(201).json({
-            message: "User registered successfully",
-            data: newUser,
-        });
+        res.status(201).json({ message: "User registered successfully" });
     } catch (error) {
         logger.error(`Error registering user: ${error.message}`);
         return next(error);        
@@ -52,7 +49,7 @@ export const registerUser = async (req, res, next) => {
 };
 
 export const loginUser = async (req, res, next) => {   
-    const { email, password } = req.validData;
+    const { email, password, rememberMe } = req.validData;
 
     if (!email || !password) {    
         logger.warn(`Invalid login data received`);    
@@ -62,7 +59,7 @@ export const loginUser = async (req, res, next) => {
     try {
         const environment = process.env.NODE_ENV || 'development';
 
-        const user = await am.getUserByEmail(email);
+        const user = await am.getUserByEmail(email, { includePassword: true, updateLastLogin: true });
         if (!user) {
             logger.warn(`Login failed: Email not found - ${email}`);
             return next({ 
@@ -90,11 +87,13 @@ export const loginUser = async (req, res, next) => {
         }
 
         const token = await generateToken(user);
+
+        const cookieMaxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000;
         res.cookie("token", token, {
             httpOnly: true, 
             secure: process.env.NODE_ENV === "production", 
             sameSite: "Strict", 
-            maxAge: 3600000, 
+            maxAge: cookieMaxAge, 
         });
 
         logger.info(`User logged in successfully: ${user.email}`);

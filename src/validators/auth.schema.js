@@ -33,6 +33,8 @@ export const loginSchema = z.object({
         .string({ required_error: 'Password is required' })
         .min(8, { message: 'Password must be at least 8 characters long' })
         .max(40, 'Password must be 40 characters or less'),
+
+    rememberMe: z.boolean().optional(),
 });
 
 export const toggleUserSchema = z.object({

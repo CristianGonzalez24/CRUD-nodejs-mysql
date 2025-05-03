@@ -10,6 +10,9 @@ const router = Router();
 
 router.get('/me', verifyToken, ac.getProfile);
 router.get("/users", verifyToken, isAdmin, ac.getAllUsers);
+router.get('/check-auth', verifyToken, (req, res) => {
+    return res.status(200).json({ message: "Authenticated" });
+});
 
 router.post('/register', validateSchema(registerSchema), ac.registerUser);
 router.post('/admin/register', verifyToken, isAdmin, validateSchema(registerSchema), ac.registerUser);

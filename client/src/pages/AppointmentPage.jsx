@@ -128,7 +128,7 @@ const AppointmentPage = () => {
             ...prev,
             [name]: value
         }));
-        // Clear error when user starts typing
+
         if (errors[name]) {
             setErrors(prev => ({
             ...prev,
@@ -167,7 +167,7 @@ const AppointmentPage = () => {
             </div>
 
             <div className="appointment-container">
-                <form onSubmit={(e) => e.preventDefault()} className="appointment-grid">
+                <form onSubmit={(e) => e.preventDefault()} className="appointment-grid" noValidate>
                     <div className="appointment-section">
                         <h2>Select Doctor</h2>
                         {errors.doctor && (
@@ -194,7 +194,7 @@ const AppointmentPage = () => {
                                         className={`doctor-card ${selectedDoctor?.id === doctor.id ? 'selected' : ''}`}
                                         onClick={() => setSelectedDoctor(doctor)}
                                         >
-                                            <img className="doctor-image" />
+                                            <img className="doctor-image appointment-image" />
                                             <div className="doctor-info">
                                                 <h3 className="doctor-name">{`${doctor.first_name} ${doctor.last_name}`}</h3>
                                                 <p className="doctor-specialization">{doctor.specialty}</p>

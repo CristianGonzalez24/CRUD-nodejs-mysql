@@ -1,16 +1,18 @@
 import { createContext, useState, useCallback, useEffect } from "react";
+import { useAuth } from '../hooks/useAuth.js';
 import * as doctorsApi from '../api/doctors.js';
 import { toast } from 'react-toastify';
 
 export const DoctorsContext = createContext();
 
 export const DoctorsProvider = ({ children }) => {
+
+    const { isAdmin } = useAuth();
+
     const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState(null);
     const [specializations, setSpecializations] = useState([]);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const getDoctors = useCallback(async () => {
         setLoading(true);
@@ -164,22 +166,32 @@ export const DoctorsProvider = ({ children }) => {
         }
     }, [doctors.length, getDoctors]);
 
+    useEffect(() => {
+        if (errors) {
+            const timer = setTimeout(() => {
+            setErrors(null);
+            }, 8000);
+        
+            return () => clearTimeout(timer);
+        }
+    }, [errors]);
+
+    const value = {
+        doctors,
+        loading,
+        errors,
+        specializations,
+        getDoctors,
+        deactivateDoctor,
+        activateDoctor,
+        deleteDoctor,
+        addDoctor,
+        fetchDoctorById,
+        updateDoctor
+    };
+
     return (
-        <DoctorsContext.Provider value={{
-            doctors,
-            loading,
-            errors,
-            specializations,
-            isAdmin,
-            isLoggedIn,
-            getDoctors,
-            deactivateDoctor,
-            activateDoctor,
-            deleteDoctor,
-            addDoctor,
-            fetchDoctorById,
-            updateDoctor
-        }}>
+        <DoctorsContext.Provider value={value}>
             {children}
         </DoctorsContext.Provider>
     );

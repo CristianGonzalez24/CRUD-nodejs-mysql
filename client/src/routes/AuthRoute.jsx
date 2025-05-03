@@ -1,10 +1,10 @@
 import { Navigate, Outlet } from "react-router";
-import { useDoctors } from "../hooks/useDoctors";
+import { useAuth } from '../hooks/useAuth';
 
 const AuthRoute = () => {
-    const { isLoggedIn, isAdmin } = useDoctors();
+    const { isLogged, isAdmin } = useAuth();
 
-    if (!isLoggedIn && !isAdmin) {
+    if (!isLogged && !isAdmin) {
         return <Navigate to="/login" replace />;
     }  
 

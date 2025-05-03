@@ -1,8 +1,9 @@
 import { Navigate, Outlet } from "react-router";
-import { useDoctors } from "../hooks/useDoctors";
+import { useAuth } from '../hooks/useAuth.js';
+
 
 const ProtectedRoute = () => {
-    const { isAdmin } = useDoctors();
+    const { isAdmin } = useAuth();
 
     if (!isAdmin) {
         return <Navigate to="/doctors" replace />

@@ -1,8 +1,9 @@
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { ENV } from '../config/ENV.js';
+import { handleError } from '../utils/errorHandler.js';
 
 const instance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+    baseURL: ENV.API_URL,
     withCredentials: true,
     timeout: 10000,
     headers: {
@@ -10,25 +11,12 @@ const instance = axios.create({
     }
 });
 
-const handleError = (error) => {
-    if (error.response) {
-        const errorMessage = error.response.data.message || error.response.statusText;
-        console.error(`Error ${error.response.status}: ${errorMessage}`);
-        toast.error(`Error ${error.response.status}: ${errorMessage}`);
-    } else if (error.request) {
-        console.error('Could not connect to the server. Please check your internet connection.');
-        toast.error('Could not connect to the server. Please check your internet connection.');
-    } else {
-        console.error('Error:', error.message);
-        toast.error(`Error: ${error.message}`);
-    }
-
-    return Promise.reject(error);
-};
-
 instance.interceptors.response.use(
     response => response,
-    error => handleError(error)
+    error => {
+        handleError(error, { logOnly: true });
+        return Promise.reject(error);
+    }
 );
 
 export default instance;

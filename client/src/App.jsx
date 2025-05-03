@@ -10,6 +10,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import AppointmentPage from "./pages/AppointmentPage";
 import AuthRoute from "./routes/AuthRoute";
 import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
+import AccountPage from "./pages/AccountPage";
 import TermsAndConditions from './pages/TermsAndConditions';
 
 const ScrollToTop = () => {
@@ -30,6 +32,7 @@ function App() {
       <Route path="/" element={<HomePage />}/>
       <Route path="/doctors" element={<DoctorsPage />}/>
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/terms" element={<TermsAndConditions />} />
 
       <Route element={<ProtectedRoute />}>
@@ -39,6 +42,7 @@ function App() {
       </Route>
 
       <Route element={<AuthRoute />}>
+        <Route path="/account" element={<AccountPage />} />
         <Route path="/book-appointment" element={<AppointmentPage />}/>
       </Route>
 

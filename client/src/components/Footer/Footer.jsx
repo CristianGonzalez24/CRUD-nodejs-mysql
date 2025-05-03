@@ -1,8 +1,23 @@
+import { Link as RouterLink, useNavigate } from "react-router";
 import { Link } from "react-scroll";
+import { useDoctors } from '../../hooks/useDoctors.js';
 import { Facebook, Twitter, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import './Footer.css'
+import { toast } from 'react-toastify';
 
 const Footer = () => {
+    const { isLoggedIn } = useDoctors();
+    const navigate = useNavigate();
+
+    const handleBookingClick = () => {
+        if (isLoggedIn) {
+            navigate("/book-appointment");
+        } else {
+            toast.warning("You must be logged in to book an appointment.");
+            navigate("/login");
+        }
+    };
+
     return (
         <footer className="footer" id="contact">
             <div className="container">
@@ -35,7 +50,7 @@ const Footer = () => {
                             <li><Link to="home" smooth={true} duration={500}>About Us</Link></li>
                             <li><Link to="services" smooth={true} duration={500}>Our Services</Link></li>
                             <li><Link to="doctors" smooth={true} duration={500}>Find a Doctor</Link></li>
-                            <li><a href="#" onClick={(e) => e.preventDefault()}>Appointments</a></li>
+                            <li><RouterLink to="/book-appointment" onClick={handleBookingClick}>Book an Appointment</RouterLink></li>
                             <li><a href="#" onClick={(e) => e.preventDefault()}>Career</a></li>
                         </ul>
                     </div>

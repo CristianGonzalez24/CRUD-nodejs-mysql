@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router";
-import { Eye, EyeOff, AlertCircle, Github, Chrome, Twitter, Facebook, Linkedin, Loader } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Loader } from 'lucide-react';
 import AlertMessage from '../components/AlertMessage/AlertMessage';
+import { useAuth } from '../hooks/useAuth.js';
 import './styles/RegisterPage.css'
 
 
 const Register = () => {
+    const { isAdmin, registerUser } = useAuth();
+
     const [formData, setFormData] = useState({
         username: '',
         email: '',
@@ -141,8 +144,7 @@ const Register = () => {
         setShowSuccess(false);
         
         try {
-        //   const result = await registerUser(formData); 
-            console.log('Form data:', formData);
+            const result = await registerUser(formData.username, formData.email, formData.password, formData.role); 
         
             if (result.success) {
                 setShowSuccess(true);
@@ -176,30 +178,30 @@ const Register = () => {
                 </div>
 
                 <div className="social-login">
-                    <button className="social-btn google">
+                    {/* <button className="social-btn google">
                         <box-icon name='google' type='logo' color='#ffffff'></box-icon>
                         <span>Sign up with Google</span>
-                    </button>
-                    <button className="social-btn facebook">
+                    </button> */}
+                    {/* <button className="social-btn facebook">
                         <box-icon type='logo' name='facebook' color='#ffffff'></box-icon>
                         <span>Sign up with Facebook</span>
-                    </button>
-                    <button className="social-btn github">
+                    </button> */}
+                    {/* <button className="social-btn github">
                         <box-icon type='logo' name='github' color='#ffffff'></box-icon>
                         <span>Sign up with Github</span>
-                    </button>
-                    <button className="social-btn twitter">
+                    </button> */}
+                    {/* <button className="social-btn twitter">
                         <box-icon type='logo' name='twitter' color='#ffffff'></box-icon>
                         <span>Sign up with Twitter</span>
-                    </button>
+                    </button> */}
                     <button className="social-btn discord">
                     <box-icon name='discord-alt' type='logo' color='#ffffff'></box-icon>
                         <span>Sign up with Discord</span>
                     </button>
-                    <button className="social-btn apple">
+                    {/* <button className="social-btn apple">
                         <box-icon type='logo' name='apple' color='#ffffff'></box-icon>
                         <span>Sign up with Apple</span>
-                    </button>
+                    </button> */}
                 </div>
 
                 <div className="divider">
@@ -226,15 +228,16 @@ const Register = () => {
                     <div className="form-group">
                         <label htmlFor="username">Username</label>
                         <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        disabled={isSubmitting}
-                        className={errors.username ? 'error' : ''}
-                        aria-invalid={errors.username ? 'true' : 'false'}
-                        aria-describedby={errors.username ? 'username-error' : undefined}
+                            type="text"
+                            id="username"
+                            name="username"
+                            value={formData.username}
+                            onChange={handleInputChange}
+                            disabled={isSubmitting}
+                            className={errors.username ? 'error' : ''}
+                            autoComplete="username"
+                            aria-invalid={errors.username ? 'true' : 'false'}
+                            aria-describedby={errors.username ? 'username-error' : undefined}
                         />
                         {errors.username && (
                         <span className="error-text" id="username-error" role="alert">
@@ -247,15 +250,16 @@ const Register = () => {
                     <div className="form-group">
                         <label htmlFor="email">Email Address</label>
                         <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        disabled={isSubmitting}
-                        className={errors.email ? 'error' : ''}
-                        aria-invalid={errors.email ? 'true' : 'false'}
-                        aria-describedby={errors.email ? 'email-error' : undefined}
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            disabled={isSubmitting}
+                            className={errors.email ? 'error' : ''}
+                            autoComplete="email"
+                            aria-invalid={errors.email ? 'true' : 'false'}
+                            aria-describedby={errors.email ? 'email-error' : undefined}
                         />
                         {errors.email && (
                         <span className="error-text" id="email-error" role="alert">
@@ -276,6 +280,7 @@ const Register = () => {
                             onChange={handleInputChange}
                             disabled={isSubmitting}
                             className={errors.password ? 'error' : ''}
+                            autoComplete="new-password"
                             aria-invalid={errors.password ? 'true' : 'false'}
                             aria-describedby={errors.password ? 'password-error' : undefined}
                         />
@@ -337,6 +342,7 @@ const Register = () => {
                             onChange={handleInputChange}
                             disabled={isSubmitting}
                             className={errors.confirmPassword ? 'error' : ''}
+                            autoComplete="off"
                             aria-invalid={errors.confirmPassword ? 'true' : 'false'}
                             aria-describedby={errors.confirmPassword ? 'confirm-password-error' : undefined}
                         />
@@ -356,33 +362,22 @@ const Register = () => {
                         </span>
                         )}
                     </div>
-
-                    <div className="form-group">
-                        <label htmlFor="role">Account Type</label>
-                        <select
-                        id="role"
-                        name="role"
-                        value={formData.role}
-                        onChange={handleInputChange}
-                        disabled={isSubmitting}
-                        >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-
-                    {/* <div className="checkbox-group">
-                        <label className="checkbox-label" htmlFor="rememberMe">
-                        <input
-                            type="checkbox"
-                            id="rememberMe"
-                            name="rememberMe"
-                            checked={formData.rememberMe}
+                    
+                    {isAdmin && (
+                        <div className="form-group">
+                            <label htmlFor="role">Account Type</label>
+                            <select
+                            id="role"
+                            name="role"
+                            value={formData.role}
                             onChange={handleInputChange}
-                        />
-                        <span className="checkbox-text">Remember me</span>
-                        </label>
-                    </div> */}
+                            disabled={isSubmitting}
+                            >
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>                       
+                    )}
 
                     <div className="checkbox-group">
                         <label className="checkbox-label">
@@ -426,6 +421,11 @@ const Register = () => {
                         type="submit"
                         className="submit-btn"
                         disabled={isSubmitting}
+                        aria-busy={isSubmitting}
+                        aria-disabled={isSubmitting}
+                        aria-label={isSubmitting ? 'Registering...' : 'Register'}
+                        tabIndex={isSubmitting ? -1 : 0}
+                        data-testid="register-button"
                     >
                     {isSubmitting ? (
                     <>
@@ -437,7 +437,7 @@ const Register = () => {
                     )}
                     </button>
                 </form>
-                <p className="login-link">
+                <p className="log-reg-link">
                     Already have an account? <Link to="/login">Log in</Link>
                 </p>
             </div>
