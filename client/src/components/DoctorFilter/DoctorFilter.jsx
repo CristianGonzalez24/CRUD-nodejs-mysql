@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useDoctors } from '../../hooks/useDoctors.js';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Eraser } from 'lucide-react';
 import './DoctorFilter.css'
 
-const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelectedSpecialty, selectedExperience, setSelectedExperience, hideExperience }) => {
+const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelectedSpecialty, selectedExperience, setSelectedExperience, hideExperience, clearFilters }) => {
 
     const { specializations } = useDoctors();
 
@@ -31,15 +31,25 @@ const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelecte
                 />
             </div>
 
-            <button
-                className="filter-toggle-btn"
-                onClick={() => setIsFilterOpen(prev => !prev)}
-                aria-expanded={isFilterOpen}
-                aria-label="Toggle filters"
-            >
-                <SlidersHorizontal size={20} />
-                Filters
-            </button>
+            <div className="filters-buttons">
+                <button
+                    className="filter-toggle-btn"
+                    onClick={() => setIsFilterOpen(prev => !prev)}
+                    aria-expanded={isFilterOpen}
+                    aria-label="Toggle filters"
+                >
+                    <SlidersHorizontal size={20} />
+                    Filters
+                </button>
+                <button
+                    className="clear-filters-btn"
+                    onClick={clearFilters}
+                    aria-label="Clear filters"
+                    >
+                    <Eraser size={20}/>
+                    Clear Filters
+                </button>
+            </div>
 
             <div className={`filters-container ${isFilterOpen ? 'open' : ''}`}>
                 <label htmlFor="specialty-filter" className="visually-hidden">Filter by specialty</label>

@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useDoctors } from './../hooks/useDoctors';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll.js';
 import { Calendar, Clock, User, Phone, Mail, FileText, AlertCircle, CheckCircle } from 'lucide-react';
-import './styles/AppointmentPage.css'
-import ConfirmationModal from '../components/ConfirmationModal/ConfirmationModal';
 import DatePicker from "react-datepicker";
+import './styles/AppointmentPage.css'
 import "react-datepicker/dist/react-datepicker.css";
+import ConfirmationModal from '../components/ConfirmationModal/ConfirmationModal';
 import DoctorFilter from '../components/DoctorFilter/DoctorFilter';
 
 const availableTimes = [
@@ -136,6 +137,7 @@ const AppointmentPage = () => {
             }));
         }
     };
+
     const filterDoctorsForSelection = useMemo(() => {
         const lowerSearchTerm = searchTerm.toLowerCase();
 
@@ -149,6 +151,23 @@ const AppointmentPage = () => {
             return matchesSearch && matchesSpecialty;
         });
     }, [doctors, searchTerm, selectedSpecialty]);
+
+    const {
+        visibleData: doctorsToRender,
+        lastElementRef,
+        hasMore,
+        resetPage
+    } = useInfiniteScroll(filterDoctorsForSelection, 6);
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setSelectedSpecialty('all');
+        // setSearchParams({}); // TODO: add search params
+    };
+
+    useEffect(() => {
+        resetPage();
+    }, [searchTerm, selectedSpecialty]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -183,33 +202,56 @@ const AppointmentPage = () => {
                             selectedSpecialty={selectedSpecialty}
                             setSelectedSpecialty={setSelectedSpecialty}
                             hideExperience={true}
+                            clearFilters={clearFilters}
                             />
                         </div>
 
                         <div className="doctor-selection">
-                            {filterDoctorsForSelection.length > 0 ? (
-                                    filterDoctorsForSelection.map(doctor => (
-                                        <div
-                                        key={doctor.id}
-                                        className={`doctor-card ${selectedDoctor?.id === doctor.id ? 'selected' : ''}`}
-                                        onClick={() => setSelectedDoctor(doctor)}
-                                        >
-                                            <img className="doctor-image appointment-image" />
-                                            <div className="doctor-info">
-                                                <h3 className="doctor-name">{`${doctor.first_name} ${doctor.last_name}`}</h3>
-                                                <p className="doctor-specialization">{doctor.specialty}</p>
-                                                <div className="doctor-available">
-                                                    <Calendar size={16} />
-                                                    <span>Available: {getRandomAvailableDays()}</span>
-                                                </div>
-                                                {selectedDoctor?.id === doctor.id && (
-                                                    <div className="selected-indicator">
-                                                        <CheckCircle size={20} />
+                            {doctorsToRender.length > 0 ? (
+                                <>
+                                    {doctorsToRender.map((doctor, index) => {
+                                        const isLast = index === doctorsToRender.length - 1;
+                                        return (
+                                            <div
+                                            key={doctor.id}
+                                            ref={isLast ? lastElementRef : null}
+                                            className={`doctor-card ${selectedDoctor?.id === doctor.id ? 'selected' : ''}`}
+                                            onClick={() => {
+                                                if (selectedDoctor?.id === doctor.id) {
+                                                    setSelectedDoctor(null);
+                                                } else {
+                                                    setSelectedDoctor(doctor);
+                                                }
+                                            }}
+                                            >
+                                                <img className="doctor-image appointment-image" />
+                                                <div className="doctor-info">
+                                                    <h3 className="doctor-name">{`${doctor.first_name} ${doctor.last_name}`}</h3>
+                                                    <p className="doctor-specialization">{doctor.specialty}</p>
+                                                    <div className="doctor-available">
+                                                        <Calendar size={16} />
+                                                        <span>Available: {getRandomAvailableDays()}</span>
                                                     </div>
-                                                )}
+                                                    {selectedDoctor?.id === doctor.id && (
+                                                        <div className="selected-indicator">
+                                                            <CheckCircle size={20} />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))                   
+                                        )
+                                    })}
+                                    
+                                    <div className="messages-container">
+                                    {hasMore && (
+                                        <p className="loading-scroll">Loading doctors...</p>
+                                    )}
+
+                                    {!hasMore && doctorsToRender.length > 0 && (
+                                        <p className="end-of-list">End of list.</p>
+                                    )}
+                                    </div>
+                                </>
                             ) : (
                                 <div className="no-results">
                                     <p>No doctors found.</p>

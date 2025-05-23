@@ -1,18 +1,110 @@
 import { createContext, useState, useCallback, useEffect } from 'react';
+import { useNavigate } from "react-router";
+import { jwtDecode } from "jwt-decode";
 import * as authApi from '../api/auth.js';
 import { handleError } from '../utils/errorHandler.js';
 import { toast } from 'react-toastify';
 
-export const AuthContext = createContext(null);
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLogged, setIsLogged] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [token, setToken] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState(null);
 
-  const loginUser = useCallback(async (email, password, rememberMe) => {
+  let refreshTimeoutId = null;
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      setIsLoading(true);
+      setErrors(null);
+    
+      try {
+        const check = await authApi.hasRefreshTokenRequest();
+
+        if (check.data.hasToken) {
+          const response = await authApi.refreshTokenRequest();
+          const { accessToken: newAccessToken } = response.data;
+          
+          setToken(newAccessToken);
+          await getUser(newAccessToken);
+          scheduleTokenRefresh(newAccessToken);
+          setIsLogged(true);
+        }
+      } catch (error) {
+        const formattedError = handleError(error, { showToast: true });
+        setErrors(formattedError);
+        setUser(null);
+        setIsLogged(false);
+        setIsAdmin(false);
+
+        setTimeout(() => {
+          navigate('/auth/login');
+        }, 3000);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    initializeAuth();
+  }, []);
+
+  const validateReturnUrl = (url) => {
+    try {
+      const returnUrl = new URL(url, window.location.origin);
+      return returnUrl.origin === window.location.origin ? returnUrl.pathname : '/';
+    } catch {
+      return '/';
+    }
+  };
+
+  const getTokenExpiration = (token) => {
+    if (!token) return null;
+
+    try {
+      const decoded = jwtDecode(token);
+      return decoded.exp ? decoded.exp : null;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
+  };
+
+  const scheduleTokenRefresh = (accessToken) => {
+    const expirationTime = getTokenExpiration(accessToken);
+
+    if (!expirationTime) return;
+
+    const currentTime = Math.floor(Date.now() / 1000);
+    const timeUntilRefresh = expirationTime - currentTime; 
+
+    const refreshInMs = (timeUntilRefresh - 10) * 1000;
+
+    if (refreshInMs <= 0) return;
+
+    if (refreshTimeoutId) clearTimeout(refreshTimeoutId);
+
+    refreshTimeoutId = setTimeout(async () => {
+      try {
+        const response = await authApi.refreshTokenRequest();
+        const { accessToken: newToken } = response.data;
+  
+        setToken(newToken);
+        await getUser(newToken); 
+        scheduleTokenRefresh(newToken);
+      } catch (error) {
+        console.error("Error auto-refreshing token:", error);
+        logoutUser();
+      }
+    }, refreshInMs);
+  };
+
+  const loginUser = useCallback(async (email, password, rememberMe, returnUrl) => {
     setIsLoading(true);
     setErrors(null);
   
@@ -20,8 +112,16 @@ export const AuthProvider = ({ children }) => {
       const response = await authApi.loginRequest({ email, password, rememberMe });
   
       if (response.status >= 200 && response.status < 300) {
+        const { accessToken } = response.data;
+        setToken(accessToken);
+
+        await getUser(accessToken);
         setIsLogged(true);
-        return { success: true };
+
+        scheduleTokenRefresh(accessToken);
+
+        const safeReturnUrl = validateReturnUrl(returnUrl);
+        return { success: true, returnUrl: safeReturnUrl };
       }
     } catch (error) {
       const errorMessage = error.response?.data?.error?.message;
@@ -66,6 +166,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsLogged(false);
       setIsAdmin(false);
+      setToken(null);
       toast.success('Logged out successfully');
     } catch (error) {
       const formattedError = handleError(error, {
@@ -77,24 +178,26 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-
-  const getUser = useCallback(async () => {
+  const getUser = useCallback(async (accessToken) => {
     setIsLoading(true);
     setErrors(null);
   
     try {
-      const response = await authApi.getUserRequest();
-      
+      const tokenToUse = accessToken || token;
+      const response = await authApi.getUserRequest(tokenToUse);
+  
       if (response.status >= 200 && response.status < 300) {
-        const userData = response.data
-        
-        const normalizedUser = { 
+        const userData = response.data;
+  
+        const normalizedUser = {
           id: userData.id,
           username: userData.username,
           email: userData.email,
           role: userData.role,
-          avatar: userData.avatar || null 
-        }
+          created_at: userData.created_at,
+          avatar: userData.avatar || null
+        };
+  
         setUser(normalizedUser);
         setIsLogged(true);
         setIsAdmin(normalizedUser.role === 'admin');
@@ -107,35 +210,13 @@ export const AuthProvider = ({ children }) => {
       const formattedError = handleError(error, {
         fallbackMessage: "Failed to get user. Please try again later",
         showToast: false
-      })
+      });
       setErrors(formattedError);
     } finally {
       setIsLoading(false);
     }
   }, []);
   
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await authApi.checkAuthRequest();
-  
-        if (response.status >= 200 && response.status < 300) {
-          await getUser();
-        }
-      } catch (error) {
-        const formattedError = handleError(error, {
-          showToast: false
-        });  
-        setErrors(formattedError);
-
-        setUser(null);
-        setIsLogged(false);
-        setIsAdmin(false);
-      }
-    };
-  
-    checkAuth();
-  }, []);
   
   useEffect(() => {
     if (errors) {

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { Eye, EyeOff, AlertCircle, Loader } from 'lucide-react';
 import AlertMessage from '../components/AlertMessage/AlertMessage';
 import { useAuth } from '../hooks/useAuth.js';
+import { ENV } from '../config/ENV.js';
 import './styles/RegisterPage.css'
 
 
@@ -194,10 +195,10 @@ const Register = () => {
                         <box-icon type='logo' name='twitter' color='#ffffff'></box-icon>
                         <span>Sign up with Twitter</span>
                     </button> */}
-                    <button className="social-btn discord">
-                    <box-icon name='discord-alt' type='logo' color='#ffffff'></box-icon>
+                    <a className="social-btn discord" href={`${ENV.API_URL}/auth/discord`}>
+                        <box-icon name='discord-alt' type='logo' color='#ffffff'></box-icon>
                         <span>Sign up with Discord</span>
-                    </button>
+                    </a>
                     {/* <button className="social-btn apple">
                         <box-icon type='logo' name='apple' color='#ffffff'></box-icon>
                         <span>Sign up with Apple</span>
@@ -438,7 +439,7 @@ const Register = () => {
                     </button>
                 </form>
                 <p className="log-reg-link">
-                    Already have an account? <Link to="/login">Log in</Link>
+                    Already have an account? <Link to="/auth/login">Log in</Link>
                 </p>
             </div>
         </div>

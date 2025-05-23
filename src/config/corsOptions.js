@@ -1,5 +1,3 @@
-// import { loadEnvFile } from 'node:process';
-
 process.loadEnvFile();
 
 const allowedOrigins =

@@ -1,5 +1,6 @@
 import { useMemo, useCallback, useState } from "react";
 import { useDoctors } from '../../hooks/useDoctors.js';
+import { useAuth } from '../../hooks/useAuth.js';
 import { useNavigate } from "react-router";
 import ConfirmationModal from '../ConfirmationModal/ConfirmationModal';
 import { toast } from "react-toastify";
@@ -7,7 +8,8 @@ import { Mail, Phone, Calendar, Award, AlertTriangle } from 'lucide-react';
 import './DoctorCard.css'
 
 const DoctorCard = ({doctor}) => {
-    const { isAdmin, loading, deactivateDoctor, activateDoctor, deleteDoctor,  } = useDoctors();
+    const { isAdmin } = useAuth();
+    const { deactivateDoctor, activateDoctor, deleteDoctor, loading  } = useDoctors();
 
     const [showModal, setShowModal] = useState(false);
     const [closing, setClosing] = useState(false);
@@ -17,6 +19,7 @@ const DoctorCard = ({doctor}) => {
         type: 'info',
         onConfirm: () => {},
     });
+
     const navigate = useNavigate();
 
     const formattedPhone = useMemo(() => {
@@ -136,6 +139,7 @@ const DoctorCard = ({doctor}) => {
                                 <button 
                                     className="btn btn-primary doctor-action-btn"
                                     onClick={() => navigate(`/doctors/edit/${doctor.id}`)}
+                                    disabled={loading}                            
                                 >
                                     Update
                                 </button>

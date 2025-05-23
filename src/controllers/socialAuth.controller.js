@@ -1,11 +1,11 @@
 import * as sm from '../models/socialAuth.model.js';
-import { getUserByEmail } from '../models/auth.model.js';
-import { generateToken } from '../utils/jwt.js';
+import { getUserByEmail, getUserById } from '../models/auth.model.js';
+import { generateTokens } from '../utils/jwt.js';
 import logger from '../config/logger.js';
 
 process.loadEnvFile();
 
-export const discordAuthController = async (req, res) => {
+export const discordAuthController = async (req, res, next) => {
     const profile = req.user;
 
     const avatarUrl = profile.avatar
@@ -19,26 +19,41 @@ export const discordAuthController = async (req, res) => {
 
         const existingSocialAccount = await sm.findSocialAccount('discord', profile.id);
 
+        const redirectUrl = isProduction ? process.env.PRODUCTION_URL : process.env.FRONTEND_URL;
+
         if (existingSocialAccount) {
-            const token = generateToken({
-                id: existingSocialAccount.user_id,
-                username: existingSocialAccount.username,
-                email: existingSocialAccount.email
-            });
-            logger.info(`Existing social account found for Discord user: ${existingSocialAccount.user_id}`);
+            const user = await getUserById(existingSocialAccount.user_id);
+        
+            if (!user || !user.is_active) {
+                logger.warn(`User account is inactive or not found: ${existingSocialAccount.user_id}`);
 
-            const redirectUrl = isProduction ? process.env.PRODUCTION_URL : process.env.FRONTEND_URL;
+                const errorParams = new URLSearchParams({
+                    error: 'Account is inactive. Please contact support.'
+                });
 
-            const queryParams = new URLSearchParams({
-                avatar: existingSocialAccount.avatar
-            });
-
-            return res.cookie('token', token, {
+                return res.redirect(`${redirectUrl}?${errorParams.toString()}`);
+            }
+        
+            await sm.updateLastLogin(user.id);
+        
+            const { accessToken, refreshToken } = await generateTokens(user);
+        
+            logger.info(`Existing social account found for Discord user: ${user.id}`);
+    
+            return res
+            .cookie("refreshToken", refreshToken, {
                 httpOnly: true,
                 secure: isProduction,
-                sameSite: 'strict'
+                sameSite: "Strict",
+                maxAge: 7 * 24 * 60 * 60 * 1000
             })
-            .redirect(`${redirectUrl}?${queryParams.toString()}`);
+            .cookie("accessToken", accessToken, {
+                httpOnly: false,
+                secure: isProduction,
+                sameSite: "Strict",
+                maxAge: 5 * 60 * 1000
+            })
+            .redirect(redirectUrl);
         }
 
         logger.info(`No existing social account found for Discord user: ${profile.id}`);
@@ -48,10 +63,11 @@ export const discordAuthController = async (req, res) => {
         if (!user) {
             user = await sm.createUser({
                 username: profile.global_name,
-                email: profile.email
+                email: profile.email,
+                is_active: true
             });
             logger.info(`New user created for Discord user: ${user.id}`);
-
+        
             await sm.updateLastLogin(user.id);
         }
 
@@ -66,24 +82,27 @@ export const discordAuthController = async (req, res) => {
             discriminator: profile.discriminator
         });
 
-        const token = generateToken(user);
+        const { accessToken, refreshToken } = await generateTokens(user);
 
         logger.info(`Social account created and token generated for Discord user: ${user.id}`);
 
-        const redirectUrl = isProduction ? process.env.PRODUCTION_URL : process.env.FRONTEND_URL;
-
-        const queryParams = new URLSearchParams({
-            avatar: new_social_account.avatar
-        });
-
-        return res.cookie('token', token, {
+        return res
+        .cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: isProduction,
-            sameSite: 'strict'
+            sameSite: "Strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000
         })
-        .redirect(`${redirectUrl}?${queryParams.toString()}`);
+        .cookie("accessToken", accessToken, {
+            httpOnly: false,
+            secure: isProduction,
+            sameSite: "Strict",
+            maxAge: 5 * 60 * 1000
+        })
+        .redirect(redirectUrl);
+
     } catch (error) {
         logger.error(`Error processing Discord authentication: ${error.message}`);
-        return res.status(500).json({ message: 'Internal server error' });
+        return next(error);
     }
 }

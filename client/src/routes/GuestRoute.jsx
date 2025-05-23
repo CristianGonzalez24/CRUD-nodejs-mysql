@@ -1,10 +1,11 @@
 import { Navigate, Outlet, useLocation } from "react-router";
-import { useAuth } from '../hooks/useAuth.js';
+import { useAuth } from '../hooks/useAuth';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 
-const ProtectedRoute = () => {
-    const { isAdmin, isLoading } = useAuth();
+const GuestRoute = () => {
+    const { isLogged, isLoading } = useAuth();
     const location = useLocation();
+    const from = location.state?.from || '/';
 
     if (isLoading) return (
         <div className="loading-overlay" role="alert" aria-busy="true">
@@ -12,11 +13,12 @@ const ProtectedRoute = () => {
         </div>
     );
 
-    if (!isAdmin) return (
-        <Navigate to="/doctors" state={{ from: location.pathname }} replace/>
-    );
+    if (isLogged) {
+        // return <Navigate to="/" replace />;
+        return <Navigate to={from} replace />;
+    }
 
     return <Outlet />;
 };
 
-export default ProtectedRoute;
+export default GuestRoute;

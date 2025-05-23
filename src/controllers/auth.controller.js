@@ -1,9 +1,13 @@
 import bcrypt from 'bcrypt';
 import logger from '../config/logger.js';
+import jwt from "jsonwebtoken";
+import { promisify } from "util";
 import * as am from '../models/auth.model.js';
-import { generateToken } from '../utils/jwt.js';
+import { generateTokens } from '../utils/jwt.js';
 
 process.loadEnvFile();
+
+const verifyAsync = promisify(jwt.verify);
 
 export const registerUser = async (req, res, next) => {   
     const { username, email, password, role } = req.validData;
@@ -57,14 +61,14 @@ export const loginUser = async (req, res, next) => {
     }
 
     try {
-        const environment = process.env.NODE_ENV || 'development';
+        const isProduction = process.env.NODE_ENV === "production";
 
         const user = await am.getUserByEmail(email, { includePassword: true, updateLastLogin: true });
         if (!user) {
             logger.warn(`Login failed: Email not found - ${email}`);
             return next({ 
                 status: 401, 
-                message: environment === 'production' 
+                message: isProduction 
                     ? "Invalid email or password" 
                     : "Email not found",
             });
@@ -80,25 +84,28 @@ export const loginUser = async (req, res, next) => {
             logger.warn(`Login failed: Incorrect password for email - ${email}`);
             return next({ 
                 status: 401, 
-                message: environment === 'production' 
+                message: isProduction 
                     ? "Invalid email or password" 
                     : "Incorrect password",
             });
         }
 
-        const token = await generateToken(user);
+        const { accessToken, refreshToken } = await generateTokens(user);
 
-        const cookieMaxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000;
-        res.cookie("token", token, {
-            httpOnly: true, 
-            secure: process.env.NODE_ENV === "production", 
-            sameSite: "Strict", 
-            maxAge: cookieMaxAge, 
+        const cookieMaxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000; // 7 days o 1 hour
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: "Strict",
+            maxAge: cookieMaxAge,
         });
 
         logger.info(`User logged in successfully: ${user.email}`);
 
-        res.status(200).json({ message: "Login successful" });
+        res.status(200).json({
+            accessToken: accessToken,
+            message: "Login successful",
+        });
 
     } catch (error) {
         logger.error(`Error logging in user: ${error.message}`);
@@ -142,6 +149,8 @@ export const getProfile = async (req, res, next) => {
             username: user.username,
             email: user.email,
             role: user.role,
+            created_at: user.created_at,
+            avatar: user.avatar || null
         });
 
     } catch (error) {
@@ -293,4 +302,66 @@ export const updateUserPassword = async (req, res, next) => {
         logger.error(`Error updating password: ${error.message}`); 
         return next(error);
     }
+};
+
+export const refreshAccessToken = async (req, res, next) => { 
+    try { 
+        const token = req.cookies?.refreshToken; 
+
+        if (!token) {
+            logger.warn("Unauthorized: No token provided");
+            return next({ status: 401, message: "Unauthorized: No token provided" });
+        } 
+
+        const decoded = await verifyAsync(token, process.env.REFRESH_TOKEN_SECRET);
+
+        if (!decoded) {
+            logger.warn("Unauthorized: Invalid token");
+            return next({ status: 401, message: "Unauthorized: Invalid token" });
+        } 
+
+        const user = await am.getUserById(decoded.id); 
+
+        if (!user) {
+            logger.warn("Unauthorized: User not found");
+            return next({ status: 401, message: "Unauthorized: User not found" });
+        }
+        
+        const payload = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role || 'user'
+        };
+
+        const accessToken = jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN|| '15m' }
+        );
+
+        logger.info(`Access token refreshed for user: ${user.username}`);
+
+        res.status(200).json({ accessToken }); 
+
+    } catch (error) {
+        logger.error(`Error refreshing access token: ${error.message}`); 
+
+        if (error.name === 'TokenExpiredError') {
+            logger.warn("Unauthorized: Token expired");
+            return next({ status: 401, message: "Session expired. Please log in again." });
+        }
+
+        if (error.name === 'JsonWebTokenError') {
+            logger.warn("Unauthorized: Invalid token");
+            return next({ status: 401, message: "Invalid refresh token" });
+        }
+
+        return next(error);
+    } 
+};
+
+export const hasRefreshToken = (req, res) => { 
+    const token = req.cookies?.refreshToken;
+    return res.json({ hasToken: Boolean(token) });
 };

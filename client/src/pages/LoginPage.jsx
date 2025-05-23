@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 import AlertMessage from '../components/AlertMessage/AlertMessage';
 import { useAuth } from '../hooks/useAuth.js';
@@ -16,6 +16,7 @@ const LoginPage = () => {
     });
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [validFields, setValidFields] = useState({});
     const [showPassword, setShowPassword] = useState(false);
@@ -101,17 +102,18 @@ const LoginPage = () => {
         setIsSubmitting(true);
         
         try{
-            const result = await loginUser(formData.email, formData.password, formData.rememberMe);
+            const returnUrl = location.state?.from || '/';
+            const result = await loginUser(formData.email, formData.password, formData.rememberMe, returnUrl);
 
             if (result.success) {
-                await getUser();
+                // await getUser();
                 setFormData({
                     email: '',
                     password: '',
                     rememberMe: false
                 });
                 setErrors({});
-                navigate('/');
+                navigate(result.returnUrl, { replace: true });
             } else {
                 setErrors(prev => ({
                     ...prev,
@@ -252,7 +254,7 @@ const LoginPage = () => {
                 </form>
 
                 <p className="log-reg-link">
-                    Don't have an account? <Link to="/register">Create one</Link>
+                    Don't have an account? <Link to="/auth/register">Create one</Link>
                 </p>
             </div>
         </div>

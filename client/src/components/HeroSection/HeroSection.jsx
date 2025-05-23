@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useDoctors } from '../../hooks/useDoctors.js';
+import { useAuth } from '../../hooks/useAuth.js';
 import { useNavigate } from "react-router";
 import { ArrowRight } from 'lucide-react';
 import './HeroSection.css'
@@ -7,17 +7,19 @@ import EmergencyModal from '../EmergencyModal/EmergencyModal';
 import { toast } from 'react-toastify';
 
 const HeroSection = () => {
-    const { isLoggedIn } = useDoctors();
+    const { isLogged } = useAuth();
 
     const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
     const navigate = useNavigate();
 
     const handleBookingClick = () => {
-        if (isLoggedIn) {
+        if (isLogged) {
             navigate("/book-appointment");
         } else {
             toast.warning("You must be logged in to book an appointment.");
-            navigate("/login");
+            navigate("/login", {
+                state: { from: "/" }
+            });
         }
     };
 

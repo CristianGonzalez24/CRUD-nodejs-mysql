@@ -31,9 +31,6 @@
   flex-direction: column;
   gap: 1.5rem;
 }
-.form-group label {
-  display: flex;
-}
 .input-wrapper{
   position: relative;
   display: flex;

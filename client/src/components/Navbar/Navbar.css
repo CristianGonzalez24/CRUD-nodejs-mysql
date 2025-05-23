@@ -66,6 +66,9 @@
 .profile-button:hover {
   background: var(--bg-light);
 }
+.profile-button.active{
+  border: 2px solid var(--primary-color);
+}
 .avatar{
   width: 2.5rem;
   height: 2.5rem;

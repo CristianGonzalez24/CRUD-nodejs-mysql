@@ -16,7 +16,7 @@ export const handleError = (error, options = {}) => {
     if (error.response) {
         status = error.response.status || 500;
         const backendMessage =
-            error.response.data?.error?.message || error.response.data?.message;
+            error.response?.data?.error?.message || error.response.data?.message;
 
         message = backendMessage || error.response.statusText || fallbackMessage;
     } else if (error.request) {

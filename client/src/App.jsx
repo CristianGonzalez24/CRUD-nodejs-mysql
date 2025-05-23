@@ -7,8 +7,9 @@ import DoctorsPage from "./pages/DoctorsPage";
 import DoctorForm from "./pages/DoctorForm";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import AppointmentPage from "./pages/AppointmentPage";
 import AuthRoute from "./routes/AuthRoute";
+import GuestRoute from "./routes/GuestRoute";
+import AppointmentPage from "./pages/AppointmentPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import AccountPage from "./pages/AccountPage";
@@ -29,21 +30,24 @@ function App() {
     <Navbar />
     <ScrollToTop />
     <Routes>
-      <Route path="/" element={<HomePage />}/>
-      <Route path="/doctors" element={<DoctorsPage />}/>
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/" element={<HomePage />}/>
+        <Route path="/doctors" element={<DoctorsPage />}/>
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
 
-      <Route element={<ProtectedRoute />}>
-        <Route path="/doctors/create" element={<DoctorForm />}/>
-        <Route path="/doctors/edit/:id" element={<DoctorForm />}/>
-        <Route path="/admin/register" element={<RegisterPage />} />
-      </Route>
+        <Route element={<GuestRoute />}>
+          <Route path="auth/register" element={<RegisterPage />} />
+          <Route path="auth/login" element={<LoginPage />} />
+        </Route>
 
       <Route element={<AuthRoute />}>
-        <Route path="/account" element={<AccountPage />} />
+        <Route path="/my-account" element={<AccountPage />} />
         <Route path="/book-appointment" element={<AppointmentPage />}/>
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/doctors/create" element={<DoctorForm />}/>
+          <Route path="/doctors/edit/:id" element={<DoctorForm />}/>
+          <Route path="/admin/auth/register" element={<RegisterPage />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<NotFound />}/>

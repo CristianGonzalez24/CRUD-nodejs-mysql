@@ -16,12 +16,12 @@ export const findSocialAccount = async (provider, providerUserId) => {
     }    
 };
 
-export const createUser = async ({ username, email }) => {
+export const createUser = async ({ username, email, is_active = false }) => {
     try {
         const [result] = await pool.query(
-            `INSERT INTO users (username, email) VALUES (?, ?)`,
-            [username, email]
-        )
+            `INSERT INTO users (username, email, is_active) VALUES (?, ?, ?)`,
+            [username, email, is_active]
+        );
 
         if (result.affectedRows === 0) {
             logger.error("Failed to create user: No rows affected.");
@@ -31,7 +31,8 @@ export const createUser = async ({ username, email }) => {
         const newUser = {
             id: result.insertId,
             username,
-            email
+            email,
+            is_active
         };
 
         logger.info(`User created successfully with ID: ${result.insertId} and email: ${email}`);
@@ -40,7 +41,7 @@ export const createUser = async ({ username, email }) => {
         logger.error(`Database query failed in createUser. Error: ${error.message}`);
         throw new Error("Database query failed in createUser");
     }
-}
+};
 
 export const updateLastLogin = async (user_id) => {
     try {

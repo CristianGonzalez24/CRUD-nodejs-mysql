@@ -1,18 +1,18 @@
 import { createContext, useState, useCallback, useEffect } from "react";
 import { useAuth } from '../hooks/useAuth.js';
 import * as doctorsApi from '../api/doctors.js';
+import { handleError } from '../utils/errorHandler.js';
 import { toast } from 'react-toastify';
 
 export const DoctorsContext = createContext();
 
 export const DoctorsProvider = ({ children }) => {
-
     const { isAdmin } = useAuth();
 
     const [doctors, setDoctors] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState(null);
     const [specializations, setSpecializations] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [errors, setErrors] = useState(null);
 
     const getDoctors = useCallback(async () => {
         setLoading(true);
@@ -28,9 +28,10 @@ export const DoctorsProvider = ({ children }) => {
             }
         } catch (error) {
             if(isMounted) {
-                const errorMessage = error.response?.data?.error?.message || "Failed to fetch doctors. Please try again later";
-                setErrors(errorMessage);
-                toast.error(errorMessage);
+                const formattedError = handleError(error, { 
+                    fallbackMessage: "Failed to fetch doctors. Please try again later",
+                });
+                setErrors(formattedError);
             }
         } finally {
             if (isMounted) {
@@ -51,9 +52,10 @@ export const DoctorsProvider = ({ children }) => {
             toast.success("Doctor deactivated successfully!");
             getDoctors();
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || "Failed to deactivate doctor. Please try again later";
-            setErrors(errorMessage);
-            toast.error(errorMessage);
+            const formattedError = handleError(error, {
+                fallbackMessage: "Failed to deactivate doctor. Please try again later"
+            })
+            setErrors(formattedError);
         } finally {
             setLoading(false);
         }
@@ -67,9 +69,10 @@ export const DoctorsProvider = ({ children }) => {
             toast.success("Doctor activated successfully!");
             getDoctors();
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || "Failed to activate doctor. Please try again later"; 
-            setErrors(errorMessage);
-            toast.error(errorMessage);
+            const formattedError = handleError(error, {
+                fallbackMessage: "Failed to activate doctor. Please try again later"
+            })
+            setErrors(formattedError);
         } finally {
             setLoading(false);
         }
@@ -83,9 +86,10 @@ export const DoctorsProvider = ({ children }) => {
             toast.success("Doctor deleted successfully!");
             getDoctors();
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || "Failed to delete doctor";
-            setErrors(errorMessage);
-            toast.error(errorMessage);
+            const formattedError = handleError(error, {
+                fallbackMessage: "Failed to delete doctor. Please try again later"
+            })
+            setErrors(formattedError);
         } finally {
             setLoading(false);
         }
@@ -109,9 +113,11 @@ export const DoctorsProvider = ({ children }) => {
             getDoctors();    
             return { success: true, data: response.data };
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || "Failed to add doctor. Please try again";
+            const errorMessage = error.response?.data?.error?.message;
+            const formattedError = handleError(error, {
+                fallbackMessage: "Failed to add doctor. Please try again"
+            })
             setErrors(errorMessage);
-            toast.error(errorMessage); 
             return { success: false, error: errorMessage };
         } finally {
             setLoading(false);
@@ -125,9 +131,11 @@ export const DoctorsProvider = ({ children }) => {
             const response = await doctorsApi.getDoctorByIdRequest(doctorId);
             return { success: true, doctor: response.data.data };
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || "Failed to fetch doctor. Please try again later";
-            setErrors(errorMessage);
-            toast.error(errorMessage);
+            const errorMessage = error.response?.data?.error?.message;
+            const formattedError = handleError(error, {
+                fallbackMessage: "Failed to fetch doctor. Please try again later"
+            })
+            setErrors(formattedError);
             return { success: false, error: errorMessage };
         } finally {
             setLoading(false);
@@ -151,9 +159,11 @@ export const DoctorsProvider = ({ children }) => {
             getDoctors();
             return { success: true, data: response.data.data };
         } catch (error) {
-            const errorMessage = error.response?.data?.error?.message || "Failed to update doctor. Please try again";
-            setErrors(errorMessage);
-            toast.error(errorMessage);
+            const errorMessage = error.response?.data?.error?.message;
+            const formattedError = handleError(error, {
+                fallbackMessage: "Failed to update doctor. Please try again"
+            })
+            setErrors(formattedError);
             return { success: false, error: errorMessage };
         } finally {
             setLoading(false);

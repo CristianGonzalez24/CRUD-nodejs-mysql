@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { Link as RouterLink, useNavigate } from "react-router";
 import { Link } from "react-scroll";
-import { Menu, X, Stethoscope, ChevronDown, User, Calendar, Settings, LogOut } from 'lucide-react';
+import { Menu, X, Stethoscope, ChevronDown, User, Calendar, Settings, Contact, LogOut } from 'lucide-react';
 import './navbar.css'
 
 const Navbar = () => {
@@ -95,7 +95,7 @@ const Navbar = () => {
 
                             <div className="user-profile" ref={dropdownRef}>
                                 <button
-                                className="profile-button"
+                                className={`profile-button ${showDropdown ? 'active' : ''}`}
                                 onClick={() => setShowDropdown(!showDropdown)}
                                 onKeyDown={handleKeyDown}
                                 aria-haspopup="true"
@@ -122,24 +122,31 @@ const Navbar = () => {
                                 </button>
                                 {showDropdown && (
                                     <div className="dropdown-menu" role="menu" aria-labelledby="user-menu">
-                                        <Link to="/account" className="dropdown-item" role="menuitem" onClick={handleLinkClick}>
+                                        <RouterLink to="/my-account" className="dropdown-item" role="menuitem" onClick={handleLinkClick}>
                                             <User size={16} />
                                             <span>My Account</span>
-                                        </Link>
+                                        </RouterLink>
 
-                                        <Link to="/appointments" className="dropdown-item" role="menuitem" onClick={handleLinkClick}>
+                                        <RouterLink to="/my-appointments" className="dropdown-item" role="menuitem" onClick={handleLinkClick}>
                                             <Calendar size={16} />
                                             <span>My Appointments</span>
-                                        </Link>
+                                        </RouterLink>
 
                                         {isAdmin && (
-                                        <Link to="/user-management" className="dropdown-item" role="menuitem" onClick={handleLinkClick}>
-                                            <Settings size={16} />
-                                            <span>User Management</span>
-                                        </Link>
+                                        <RouterLink to="/doctors/create" className="dropdown-item" role="menuitem" onClick={handleLinkClick}>
+                                            <Contact size={16} />
+                                            <span>Create Doctor</span>
+                                        </RouterLink>
                                         )}
 
-                    <                   button onClick={handleLogout} className="dropdown-item" role="menuitem">
+                                        {isAdmin && (
+                                        <RouterLink to="/users-management" className="dropdown-item" role="menuitem" onClick={handleLinkClick}>
+                                            <Settings size={16} />
+                                            <span>User Management</span>
+                                        </RouterLink>
+                                        )}
+
+                                        <button onClick={handleLogout} className="dropdown-item" role="menuitem">
                                             <LogOut size={16} />
                                             <span>Log Out</span>
                                         </button>
@@ -149,8 +156,8 @@ const Navbar = () => {
                         </>
                     ) : (
                         <div className="auth-buttons">
-                            <RouterLink to="/login" aria-label="Login" className="btn btn-secondary" onClick={handleLinkClick}>Login</RouterLink>
-                            <RouterLink to="/register" aria-label="Register" className="btn btn-primary" onClick={handleLinkClick}>Register</RouterLink>
+                            <RouterLink to="auth/login" aria-label="Login" className="btn btn-secondary" onClick={handleLinkClick}>Login</RouterLink>
+                            <RouterLink to="auth/register" aria-label="Register" className="btn btn-primary" onClick={handleLinkClick}>Register</RouterLink>
                         </div>
                     )}
                 </div>

@@ -3,10 +3,10 @@ import './ConfirmationModal.css'
 import { AlertTriangle, X, AlertCircle, CheckCircle } from 'lucide-react';
 
 const ConfirmationModal = ({
-    loading,
+    loading = false,
     isOpen, 
     onClose, 
-    closing,
+    closing = false,
     onConfirm, 
     title, 
     message, 
@@ -84,20 +84,24 @@ const ConfirmationModal = ({
                 <p className="modal-message">{message}</p>
 
                 <div className="modal-actions">
-                    <button
-                        onClick={onClose}
-                        className="btn btn-secondary"
-                        disabled={loading}
-                    >
-                        {cancelText}
-                    </button>
-                    <button
-                        onClick={handleConfirm}
-                        className={getButtonClass()}
-                        disabled={loading}
-                    >
-                        {loading ? "Processing..." : confirmText}
-                    </button>
+                    {onClose && (                     
+                        <button
+                            onClick={onClose}
+                            className="btn btn-secondary"
+                            disabled={loading}
+                        >
+                            {cancelText}
+                        </button>
+                    )}
+                    {onConfirm && (
+                        <button
+                            onClick={handleConfirm}
+                            className={getButtonClass()}
+                            disabled={loading}
+                        >
+                            {loading ? "Processing..." : confirmText}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

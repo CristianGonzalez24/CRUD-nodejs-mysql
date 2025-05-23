@@ -1,5 +1,6 @@
 import { Stethoscope, Heart, Brain, Eye, Laugh, BriefcaseMedical, ArrowRight } from 'lucide-react';
 import './ServicesSection.css'
+import { Link } from 'react-router';
 
 const services = [
     {
@@ -51,12 +52,13 @@ const ServicesSection = () => {
                             <div className="service-icon">{service.icon}</div>
                             <h3 className="service-title">{service.title}</h3>
                             <p className="service-description">{service.description}</p>
-                            <button 
-                                className="service-link" 
-                                aria-label={`Learn more about ${service.title}`}
+                            <Link
+                            to={`/doctors?specialty=${encodeURIComponent(service.title)}`}
+                            className="service-link"
+                            aria-label={`View Doctors for ${service.title}`}
                             >
-                            Learn more <ArrowRight size={16} />
-                            </button>
+                            View Doctors <ArrowRight size={16} />
+                            </Link>
                         </div>
                     ))}
                 </div>

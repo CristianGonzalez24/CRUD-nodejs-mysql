@@ -1,17 +1,25 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useDoctors } from '../hooks/useDoctors.js';
+import { useAuth } from './../hooks/useAuth';
+import { useSearchParams } from 'react-router';
 import DoctorCard from '../components/DoctorCard/DoctorCard';
 import DoctorFilter from '../components/DoctorFilter/DoctorFilter';
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 import Pagination from '../components/Pagination/Pagination';
 import './styles/DoctorsPage.css'
-
 const DoctorsPage = () => {
-    const { doctors, getDoctors, loading, isAdmin } = useDoctors();
+    const { doctors, getDoctors, loading } = useDoctors();
+    const { isAdmin } = useAuth();
 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedSpecialty, setSelectedSpecialty] = useState('all');
-    const [selectedExperience, setSelectedExperience] = useState('all');
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const specialtyFromURL = searchParams.get('specialty') || 'all';
+    const experienceFromURL = searchParams.get('experience') || 'all';
+    const searchFromURL = searchParams.get('search') || '';
+
+    const [searchTerm, setSearchTerm] = useState(searchFromURL);
+    const [selectedSpecialty, setSelectedSpecialty] = useState(specialtyFromURL);
+    const [selectedExperience, setSelectedExperience] = useState(experienceFromURL);
     const [showInactive, setShowInactive] = useState(false);
     const [activePage, setActivePage] = useState(1);
     const [inactivePage, setInactivePage] = useState(1);
@@ -21,6 +29,31 @@ const DoctorsPage = () => {
     useEffect(() => {
         getDoctors();
     }, [getDoctors]);
+
+    useEffect(() => {
+        const newParams = new URLSearchParams(searchParams);
+    
+        if (selectedSpecialty === 'all') {
+            newParams.delete('specialty');
+        } else {
+            newParams.set('specialty', selectedSpecialty);
+        }
+    
+        if (selectedExperience === 'all') {
+            newParams.delete('experience');
+        } else {
+            newParams.set('experience', selectedExperience);
+        }
+    
+        if (searchTerm.trim() === '') {
+            newParams.delete('search');
+        } else {
+            newParams.set('search', searchTerm.trim());
+        }
+    
+        setSearchParams(newParams);
+    }, [selectedSpecialty, selectedExperience, searchTerm]);
+    
 
     const filteredDoctors = useMemo(() => {
         const lowerSearchTerm = searchTerm.toLowerCase();
@@ -74,6 +107,13 @@ const DoctorsPage = () => {
         window.scrollTo(0, 0);
     };
 
+    const clearFilters = () => {
+        setSearchTerm('');
+        setSelectedSpecialty('all');
+        setSelectedExperience('all');
+        setSearchParams({});
+    };    
+
     useEffect(() => {
         setActivePage(1);
     }, [searchTerm, selectedSpecialty, selectedExperience]);
@@ -98,6 +138,7 @@ const DoctorsPage = () => {
                         selectedExperience={selectedExperience}
                         setSelectedExperience={setSelectedExperience}
                         hideExperience={false}
+                        clearFilters={clearFilters}
                     />
                 </div>
 

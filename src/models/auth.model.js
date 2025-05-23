@@ -98,7 +98,20 @@ export const getUserById = async (id) => {
         logger.info(`Fetching user by ID: ${id}`);        
 
         const [rows = []] = await pool.query(
-            `SELECT id, username, email, role FROM users WHERE id = ? LIMIT 1`, 
+            `
+            SELECT 
+                users.id, 
+                users.username, 
+                users.email, 
+                users.role, 
+                users.created_at, 
+                users.is_active,
+                social_accounts.avatar
+            FROM users
+            LEFT JOIN social_accounts ON users.id = social_accounts.user_id
+            WHERE users.id = ? 
+            LIMIT 1
+            `, 
             [id]
         );
 
