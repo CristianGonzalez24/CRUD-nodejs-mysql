@@ -1,13 +1,21 @@
 import bcrypt from 'bcrypt';
-import logger from '../config/logger.js';
 import jwt from "jsonwebtoken";
+import ms from 'ms';
+import * as fsp from 'fs/promises';
+import * as fs from 'fs';   
+import path from 'path';
+import logger from '../config/logger.js';
 import { promisify } from "util";
 import * as am from '../models/auth.model.js';
 import { generateTokens } from '../utils/jwt.js';
+import { fileTypeFromFile } from 'file-type';
+import { fileURLToPath } from 'url';
 
 process.loadEnvFile();
 
 const verifyAsync = promisify(jwt.verify);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const registerUser = async (req, res, next) => {   
     const { username, email, password, role } = req.validData;
@@ -63,6 +71,10 @@ export const loginUser = async (req, res, next) => {
     try {
         const isProduction = process.env.NODE_ENV === "production";
 
+        const refreshTokenExpiresIn = rememberMe 
+            ? process.env.REFRESH_TOKEN_EXPIRES_IN_REMEMBER_ME
+            : process.env.REFRESH_TOKEN_EXPIRES_IN;
+
         const user = await am.getUserByEmail(email, { includePassword: true, updateLastLogin: true });
         if (!user) {
             logger.warn(`Login failed: Email not found - ${email}`);
@@ -90,9 +102,9 @@ export const loginUser = async (req, res, next) => {
             });
         }
 
-        const { accessToken, refreshToken } = await generateTokens(user);
+        const { accessToken, refreshToken } = await generateTokens(user, refreshTokenExpiresIn);
 
-        const cookieMaxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000; // 7 days o 1 hour
+        const cookieMaxAge = ms(refreshTokenExpiresIn);
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: isProduction,
@@ -144,13 +156,17 @@ export const getProfile = async (req, res, next) => {
             
         logger.info(`Fetched user profile for user ID: ${userId}`);
 
+        if (user.avatar && user.avatar.startsWith('/uploads')) {
+            user.avatar = `${req.protocol}://${req.get('host')}${user.avatar}`;
+        }
+
         res.status(200).json({
             id: user.id,
             username: user.username,
             email: user.email,
             role: user.role,
             created_at: user.created_at,
-            avatar: user.avatar || null
+            avatar: user.avatar
         });
 
     } catch (error) {
@@ -365,3 +381,110 @@ export const hasRefreshToken = (req, res) => {
     const token = req.cookies?.refreshToken;
     return res.json({ hasToken: Boolean(token) });
 };
+
+export const uploadImage = async (req, res, next) => { 
+    try { 
+        const userId = req.user.id; 
+        const avatar = req.file; 
+
+        if (!avatar) { 
+            logger.warn("No file uploaded"); 
+            return next({ status: 400, message: "No file uploaded" }); 
+        } 
+
+        const filePath = avatar.path;
+
+        const fileType = await fileTypeFromFile(filePath);
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+        if (!fileType || !allowedMimeTypes.includes(fileType.mime)) {
+            await fsp.unlink(filePath);
+            logger.warn("Rejected invalid image type:", fileType?.mime || 'unknown');
+            return next({ status: 400, message: "Invalid file type. Upload a real image (JPEG, PNG, GIF, WEBP)." });
+        }
+
+        const user = await am.getUserById(userId);
+
+        if (user.avatar && user.avatar.startsWith(`/uploads/${userId}/`)) {
+            const cleanedPath = user.avatar.startsWith('/') ? user.avatar.slice(1) : user.avatar;
+            const oldImagePath = path.join(__dirname, '..', cleanedPath);
+            try {
+                await fsp.unlink(oldImagePath);
+                logger.info(`Deleted old avatar: ${oldImagePath}`);
+            } catch (err) {
+                logger.warn(`Old image not found or does not exist: ${oldImagePath}`);
+            }
+        } else {
+            logger.info("No local avatar found to delete (maybe social or null).");
+        }
+
+        const imageUrl = `/uploads/${userId}/${avatar.filename}`;
+        const result = await am.uploadImage(userId, imageUrl); 
+
+        if (!result) { 
+            logger.error("Failed to upload image"); 
+            return next({ status: 500, message: "Failed to upload image" }); 
+        } 
+
+        logger.info(`Image uploaded for user ID: ${userId}`);  
+
+        res.status(200).json({ 
+            message: "Profile image updated successfully",
+            imageUrl
+        }); 
+
+    } catch (error) {
+        logger.error(`Error uploading image: ${error.message}`); 
+        return next(error);
+    }
+};
+
+export const removeProfilePicture = async (req, res, next) => { 
+    try { 
+        const userId = req.user.id; 
+        const user = await am.getUserById(userId); 
+
+        if (!user) { 
+            logger.warn("User not found"); 
+            return next({ status: 404, message: "User not found" }); 
+        } 
+
+        if (user.avatar && user.avatar.startsWith(`/uploads/${userId}/`)) {
+            const cleanedPath = user.avatar.startsWith('/') ? user.avatar.slice(1) : user.avatar;
+            const imagePath = path.join(__dirname, '..', cleanedPath);
+
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+                logger.info(`Deleted profile image for user ${userId}: ${imagePath}`);
+            } else {
+                logger.warn(`Image not found or does not exist: ${imagePath}`);
+            }
+        }     
+
+        const result = await am.deleteUserAvatars(userId); 
+
+        if (!result) { 
+            logger.warn("Failed to remove profile picture"); 
+            return next({ status: 500, message: "Failed to remove profile picture" }); 
+        } 
+
+        if (!result.userAvatarCleared && !result.socialAvatarCleared) {
+            logger.warn(`No avatar found to remove for user ID: ${userId}`);
+        } else {
+            if (result.userAvatarCleared) {
+                logger.info(`Local avatar removed for user ID: ${userId}`);
+            }
+            if (result.socialAvatarCleared) {
+                logger.info(`Social avatar removed for user ID: ${userId}`);
+            }
+        }
+
+        logger.info(`Profile picture removed for user ID: ${userId}`); 
+
+        res.status(200).json({ message: "Profile image removed successfully" }); 
+
+    } catch (error) {
+        logger.error(`Error removing profile picture: ${error.message}`); 
+        return next(error);
+    }
+}

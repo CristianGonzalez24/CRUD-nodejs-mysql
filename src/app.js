@@ -5,6 +5,7 @@ import { limiter } from "./config/rateLimit.js";
 import cors from "cors";
 import { corsOptions } from "./config/corsOptions.js";
 import cookieParser from "cookie-parser";
+import { serveStaticFiles } from './config/staticFiles.js';
 import authRoutes from "./routes/auth.routes.js";
 import doctorsRoutes from "./routes/doctors.routes.js";
 import socialAuthRouter from "./config/setupSocialAuth.js";
@@ -26,6 +27,8 @@ if (!process.env.NODE_ENV || !PORT) {
 const app = express();
 setupSwagger(app);
 
+// app.set('trust proxy', true); // only if you're behind a reverse proxy
+
 // Middlewares
 app.use(express.json());
 app.use(helmet());
@@ -40,10 +43,14 @@ app.use((req, res, next) => {
  next();
 });
 
+// Static files
+serveStaticFiles(app);
+
 // Routes
 app.use("/api", doctorsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", socialAuthRouter);
+app.use('/uploads', express.static('uploads'));
 
 // Middleware for errors
 app.use(errorHandler);

@@ -2,6 +2,7 @@ import * as sm from '../models/socialAuth.model.js';
 import { getUserByEmail, getUserById } from '../models/auth.model.js';
 import { generateTokens } from '../utils/jwt.js';
 import logger from '../config/logger.js';
+import ms from 'ms';
 
 process.loadEnvFile();
 
@@ -13,6 +14,8 @@ export const discordAuthController = async (req, res, next) => {
         : `https://cdn.discordapp.com/embed/avatars/${profile.discriminator % 5}.png`;
 
         const isProduction = process.env.NODE_ENV === "production";
+        const accessTokenMaxAge = ms(process.env.JWT_EXPIRES_IN) || 15 * 60 * 1000;
+        const refreshTokenMaxAge = ms(process.env.REFRESH_TOKEN_EXPIRES_IN) || 7 * 24 * 60 * 60 * 1000; 
 
     try {
         logger.info(`Processing Discord authentication for: ${profile.email}`);
@@ -45,13 +48,13 @@ export const discordAuthController = async (req, res, next) => {
                 httpOnly: true,
                 secure: isProduction,
                 sameSite: "Strict",
-                maxAge: 7 * 24 * 60 * 60 * 1000
+                maxAge: refreshTokenMaxAge
             })
             .cookie("accessToken", accessToken, {
                 httpOnly: false,
                 secure: isProduction,
                 sameSite: "Strict",
-                maxAge: 5 * 60 * 1000
+                maxAge: accessTokenMaxAge
             })
             .redirect(redirectUrl);
         }
@@ -91,13 +94,13 @@ export const discordAuthController = async (req, res, next) => {
             httpOnly: true,
             secure: isProduction,
             sameSite: "Strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            maxAge: refreshTokenMaxAge
         })
         .cookie("accessToken", accessToken, {
             httpOnly: false,
             secure: isProduction,
             sameSite: "Strict",
-            maxAge: 5 * 60 * 1000
+            maxAge: accessTokenMaxAge
         })
         .redirect(redirectUrl);
 

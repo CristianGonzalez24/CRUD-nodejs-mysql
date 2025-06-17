@@ -29,50 +29,54 @@ body {
 
 /* Buttons Styles */
 .btn{
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0.75rem 1.5rem;
+    all: unset;
+    /* display: inline-flex; */
+    /* justify-content: center; */
+    /* align-items: center; */
+    display: inline-block;
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+    font-family: inherit;
+    text-align: center;
+    color: white;
     border-radius: 0.375rem;
-    font-weight: 500;
     cursor: pointer;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    border: none;
-    gap: 0.5rem;
-    font-size: 0.875rem;
+    user-select: none;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.btn:hover {
+    filter: brightness(0.95);
+}
+.btn:active {
+    transform: scale(0.98);
 }
 .btn-primary {
     background-color: var(--primary-color);
-    color: white;
 }
 .btn-primary:hover {
     background-color: #0052a3;
 }
 .btn-secondary {
     background-color: var(--secondary-color);
-    color: white;
 }
 .btn-secondary:hover {
     background-color: #5a6268;
 }
 .btn-danger {
     background-color: var(--danger-color);
-    color: white;
 }
 .btn-danger:hover {
     background-color: #bd2130;
 }
 .btn-warning {
     background-color: var(--warning-color);
-    color: white;
 }
 .btn-warning:hover {
     background-color: #b45309;
 }
 .btn-success {
     background-color: var(--success-color);
-    color: white;
 }
 .btn-success:hover {
     background-color: #218838;
@@ -181,18 +185,22 @@ body {
     }
     /* Doctors Page */
     .filters-section {
-        padding: 1.5rem;
+        flex-direction: column;
+        align-items: stretch;
     }
-    .filter-toggle-btn {
-        display: none;
+    .filter-toggle-btn, .clear-filters-btn {
+        width: 100%;
+        justify-content: center;
     }
     .filters-container {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-around;
+        flex-direction: column;
     }
     .search-container {
-        margin-bottom: 0;
+        min-width: auto;
+    }
+    .filter-select {
+        min-width: auto;
+        width: 100%;
     }
     /* NotFound Page */
     .not-found-content {
@@ -329,6 +337,20 @@ body {
     .form-group input,
     .form-group select {
         font-size: 16px;
+    }
+    /*Notification*/
+    .notification-container {
+        max-width: 100%;
+        padding: 0.5rem;
+    }
+    .notification-item {
+        padding: 0.75rem;
+    }
+    .notification-actions {
+        flex-direction: column;
+    }
+    .notification-action-btn {
+        width: 100%;
     }
 }
 @media (max-width: 480px) {

@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from 'react-router';
 import { useDoctors } from './../hooks/useDoctors';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll.js';
 import { Calendar, Clock, User, Phone, Mail, FileText, AlertCircle, CheckCircle } from 'lucide-react';
@@ -7,6 +8,7 @@ import './styles/AppointmentPage.css'
 import "react-datepicker/dist/react-datepicker.css";
 import ConfirmationModal from '../components/ConfirmationModal/ConfirmationModal';
 import DoctorFilter from '../components/DoctorFilter/DoctorFilter';
+import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
 
 const availableTimes = [
     '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -24,14 +26,20 @@ const getRandomAvailableDays = () => {
 const AppointmentPage = () => {
     const { doctors } = useDoctors();
 
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const specialtyFromURL = searchParams.get('specialty') || 'all';
+    const searchFromURL = searchParams.get('search') || '';
+
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedTime, setSelectedTime] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedSpecialty, setSelectedSpecialty] = useState('all');
+    const [searchTerm, setSearchTerm] = useState(searchFromURL);
+    const [selectedSpecialty, setSelectedSpecialty] = useState(specialtyFromURL);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [renderedDoctorIds, setRenderedDoctorIds] = useState([]);
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -42,6 +50,26 @@ const AppointmentPage = () => {
     });
 
     const [errors, setErrors] = useState({});
+
+    const ITEMS_PER_PAGE = 3;
+
+    useEffect(() => {
+        const newParams = new URLSearchParams(searchParams);
+    
+        if (selectedSpecialty === 'all') {
+            newParams.delete('specialty');
+        } else {
+            newParams.set('specialty', selectedSpecialty);
+        }
+    
+        if (searchTerm.trim() === '') {
+            newParams.delete('search');
+        } else {
+            newParams.set('search', searchTerm.trim());
+        }
+    
+        setSearchParams(newParams);
+    }, [selectedSpecialty, searchTerm]);
 
     const validateForm = () => {
         const newErrors = {};
@@ -138,7 +166,7 @@ const AppointmentPage = () => {
         }
     };
 
-    const filterDoctorsForSelection = useMemo(() => {
+    const filteredDoctors = useMemo(() => {
         const lowerSearchTerm = searchTerm.toLowerCase();
 
         return doctors.filter(doctor => {
@@ -153,21 +181,21 @@ const AppointmentPage = () => {
     }, [doctors, searchTerm, selectedSpecialty]);
 
     const {
-        visibleData: doctorsToRender,
-        lastElementRef,
+        displayedItems: displayedDoctors,
+        loading,
         hasMore,
-        resetPage
-    } = useInfiniteScroll(filterDoctorsForSelection, 6);
+        lastElementRef,
+        totalItems
+    } = useInfiniteScroll(filteredDoctors, ITEMS_PER_PAGE, {
+        threshold: 0.8,
+        loadingDelay: 800 // Simulate network delay
+    });
 
     const clearFilters = () => {
         setSearchTerm('');
         setSelectedSpecialty('all');
-        // setSearchParams({}); // TODO: add search params
+        setSearchParams({});
     };
-
-    useEffect(() => {
-        resetPage();
-    }, [searchTerm, selectedSpecialty]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -177,6 +205,20 @@ const AppointmentPage = () => {
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
+
+    // useEffect(() => {
+    //     console.log(`👨‍⚕️ displayedDoctors actualizados:`, displayedDoctors);
+    // }, [displayedDoctors]);
+
+    useEffect(() => {
+        const newIds = displayedDoctors
+            .map(d => d.id)
+            .filter(id => !renderedDoctorIds.includes(id));
+    
+        if (newIds.length > 0) {
+            setRenderedDoctorIds(prev => [...prev, ...newIds]);
+        }
+    }, [displayedDoctors, renderedDoctorIds]);
 
     return (
         <div className="appointment-page">
@@ -206,55 +248,77 @@ const AppointmentPage = () => {
                             />
                         </div>
 
+                        <div className="total-doctors">
+                            <p>Showing {displayedDoctors.length} of {totalItems} available doctors</p>
+                        </div>
+
                         <div className="doctor-selection">
-                            {doctorsToRender.length > 0 ? (
+                            {displayedDoctors.length > 0 ? (
                                 <>
-                                    {doctorsToRender.map((doctor, index) => {
-                                        const isLast = index === doctorsToRender.length - 1;
+                                    {displayedDoctors.map((doctor, index) => {
+                                        const isSelected = selectedDoctor?.id === doctor.id;
+                                        const doctorName = `${doctor.first_name} ${doctor.last_name}`;
+                                        const doctorSelected = () => {
+                                            if (isSelected) {
+                                                setSelectedDoctor(null);
+                                            } else {
+                                                setSelectedDoctor(doctor);
+                                            }
+                                        }
+
                                         return (
-                                            <div
-                                            key={doctor.id}
-                                            ref={isLast ? lastElementRef : null}
-                                            className={`doctor-card ${selectedDoctor?.id === doctor.id ? 'selected' : ''}`}
-                                            onClick={() => {
-                                                if (selectedDoctor?.id === doctor.id) {
-                                                    setSelectedDoctor(null);
-                                                } else {
-                                                    setSelectedDoctor(doctor);
-                                                }
-                                            }}
-                                            >
-                                                <img className="doctor-image appointment-image" />
-                                                <div className="doctor-info">
-                                                    <h3 className="doctor-name">{`${doctor.first_name} ${doctor.last_name}`}</h3>
-                                                    <p className="doctor-specialization">{doctor.specialty}</p>
-                                                    <div className="doctor-available">
-                                                        <Calendar size={16} />
-                                                        <span>Available: {getRandomAvailableDays()}</span>
-                                                    </div>
-                                                    {selectedDoctor?.id === doctor.id && (
-                                                        <div className="selected-indicator">
-                                                            <CheckCircle size={20} />
+                                            <React.Fragment key={doctor.id}>
+                                                <div
+                                                role="button"
+                                                tabIndex={0}
+                                                className={`doctor-card ${isSelected ? 'selected' : ''} ${renderedDoctorIds.includes(doctor.id) ? 'animate-in' : ''}`}
+                                                onClick={doctorSelected}
+                                                onKeyDown={e => e.key === 'Enter' && doctorSelected()}
+                                                >
+                                                    <img className="doctor-image appointment-image"/>
+                                                    <div className="doctor-info">
+                                                        <h3 className="doctor-name">{doctorName}</h3>
+                                                        <p className="doctor-specialization">{doctor.specialty}</p>
+                                                        <div className="doctor-available">
+                                                            <Calendar size={16} />
+                                                            <span>Available: {getRandomAvailableDays()}</span>
                                                         </div>
-                                                    )}
+                                                        {isSelected && (
+                                                            <div className="selected-indicator">
+                                                                <CheckCircle size={20} />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
+                                                {index === displayedDoctors.length - 1 && (
+                                                    <div ref={lastElementRef} className="scroll-trigger" />
+                                                )}
+                                            </React.Fragment>
                                         )
                                     })}
-                                    
-                                    <div className="messages-container">
-                                    {hasMore && (
-                                        <p className="loading-scroll">Loading doctors...</p>
-                                    )}
 
-                                    {!hasMore && doctorsToRender.length > 0 && (
-                                        <p className="end-of-list">End of list.</p>
-                                    )}
+                                    <div className="messages-container">
+                                        {loading && (
+                                            <div className="loading-state-container">
+                                                <LoadingSpinner size={20} color="var(--primary-color)" />
+                                                <p className="loading-state">Loading doctors...</p>
+                                            </div>
+                                        )}
+
+                                        {!hasMore && displayedDoctors.length > 0 && (
+                                            <div className="end-message">
+                                                <p>You have seen all the available doctors.</p>
+                                                <p className="results-summary">
+                                                    Total: {totalItems} doctors found
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </>
                             ) : (
                                 <div className="no-results">
-                                    <p>No doctors found.</p>
+                                    <AlertCircle size={48} />
+                                    <p>No doctors were found matching the search criteria.</p>
                                 </div>
                             )}
                         </div>

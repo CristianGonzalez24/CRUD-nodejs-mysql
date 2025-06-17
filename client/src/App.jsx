@@ -14,6 +14,7 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import AccountPage from "./pages/AccountPage";
 import TermsAndConditions from './pages/TermsAndConditions';
+import UserManagement from './pages/UserManagement';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -47,6 +48,7 @@ function App() {
           <Route path="/doctors/create" element={<DoctorForm />}/>
           <Route path="/doctors/edit/:id" element={<DoctorForm />}/>
           <Route path="/admin/auth/register" element={<RegisterPage />} />
+          <Route path="/admin/users" element={<UserManagement />} />
         </Route>
       </Route>
 

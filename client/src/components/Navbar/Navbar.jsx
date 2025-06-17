@@ -106,9 +106,7 @@ const Navbar = () => {
                                             <img
                                             src={user.avatar}
                                             alt={`${user.username}'s avatar`}
-                                            onError={(e) => {
-                                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=0066cc&color=fff&length=1&bold=true`;
-                                            }}
+                                            crossOrigin="anonymous"
                                             />
                                         ) : (
                                             <div className="avatar-fallback">

@@ -5,7 +5,7 @@ process.loadEnvFile();
 
 const signAsync = promisify(jwt.sign);
 
-export const generateTokens = async (user) => {
+export const generateTokens = async (user, refreshExpiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN) => {
     const payload = {
         id: user.id,
         username: user.username,
@@ -19,7 +19,7 @@ export const generateTokens = async (user) => {
         });
 
         const refreshToken = await signAsync(payload, process.env.REFRESH_TOKEN_SECRET, {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d'
+            expiresIn: refreshExpiresIn,
         });
 
         return { accessToken, refreshToken };

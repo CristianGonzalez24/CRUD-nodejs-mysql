@@ -93,9 +93,9 @@ export const getUserByEmail = async (email, options = {}) => {
     }
 };
 
-export const getUserById = async (id) => {    
-    try {        
-        logger.info(`Fetching user by ID: ${id}`);        
+export const getUserById = async (id) => {
+    try {
+        logger.info(`Fetching user by ID: ${id}`);
 
         const [rows = []] = await pool.query(
             `
@@ -106,29 +106,42 @@ export const getUserById = async (id) => {
                 users.role, 
                 users.created_at, 
                 users.is_active,
-                social_accounts.avatar
+                users.avatar AS local_avatar,
+                social_accounts.avatar AS social_avatar
             FROM users
             LEFT JOIN social_accounts ON users.id = social_accounts.user_id
-            WHERE users.id = ? 
+            WHERE users.id = ?
             LIMIT 1
-            `, 
+            `,
             [id]
         );
 
-        if (!Array.isArray(rows) || rows.length === 0) {            
-            logger.warn(`No user found with ID: ${id}`);            
-            return null;        
+        if (!Array.isArray(rows) || rows.length === 0) {
+            logger.warn(`No user found with ID: ${id}`);
+            return null;
         }
 
-        const user = rows[0];        
-        logger.info(`Fetched user: ${JSON.stringify(user)}`);        
-        return user;        
+        const row = rows[0];
+
+        const user = {
+            id: row.id,
+            username: row.username,
+            email: row.email,
+            role: row.role,
+            created_at: row.created_at,
+            is_active: row.is_active,
+            avatar: row.local_avatar || row.social_avatar || null,
+        };
+
+        logger.info(`Fetched user: ${JSON.stringify(user)}`);
+        return user;
 
     } catch (error) {
         logger.error(`Database query failed in getUserById. Error: ${error.message}`);
         throw new Error("Database query failed in getUserById");
     }
 };
+
 
 export const updateUserStatus = async (id, isActive) => {    
     try {        
@@ -248,3 +261,53 @@ export const getPasswordById = async (id) => {
         throw new Error("Database query failed in getPasswordById");    
     }
 }
+
+export const uploadImage = async (userId, imageUrl) => {
+    try {        
+        logger.info(`Updating avatar for user with ID: ${userId}`);        
+        
+        const [result] = await pool.query(            
+            `UPDATE users SET avatar = ? WHERE id = ?`, 
+            [imageUrl, userId]        
+        );        
+        
+        if (result.affectedRows === 0) {            
+            logger.warn(`User with ID: ${userId} not found`);            
+            return null;        
+        }        
+        return { userId, imageUrl };        
+    } catch (error) {        
+        logger.error(`Error updating avatar: ${error.message}`);        
+        throw new Error("Database query failed in uploadImage");    
+    }
+}
+
+export const deleteUserAvatars = async (userId) => {
+    try {
+        logger.info(`Deleting avatar for user with ID: ${userId}`);
+
+        const [userResult] = await pool.query(
+            `UPDATE users SET avatar = NULL WHERE id = ?`,
+            [userId]
+        );
+
+        const [socialResult] = await pool.query(
+            `UPDATE social_accounts SET avatar = NULL WHERE user_id = ?`,
+            [userId]
+        );
+
+        if (userResult.affectedRows === 0 && socialResult.affectedRows === 0) {
+            logger.warn(`User with ID: ${userId} not found in either table`);
+            return null;
+        }
+
+        return {
+            userId,
+            userAvatarCleared: userResult.affectedRows > 0,
+            socialAvatarCleared: socialResult.affectedRows > 0
+        };
+    } catch (error) {
+        logger.error(`Error deleting avatar(s): ${error.message}`);
+        throw new Error("Database query failed in deleteUserAvatars");
+    }
+};

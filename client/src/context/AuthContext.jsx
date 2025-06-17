@@ -216,7 +216,55 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(false);
     }
   }, []);
+
+  const uploadImage = useCallback(async (id, imageData) => {
+    setIsLoading(true);
+    setErrors(null);
   
+    try {
+      const response = await authApi.uploadImageRequest(id, imageData, token);
+  
+      if (response.status >= 200 && response.status < 300) {
+        await getUser(token);
+        return { success: true, message: response.data.message };
+      }
+    } catch (error) {
+      const formattedError = handleError(error, {
+        fallbackMessage: "Failed to upload image. Please try again later",
+        showToast: false
+      });
+      setErrors(formattedError);
+      return { error: error.response.data.error.message || 'Failed to upload image. Please try again later' };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, getUser]);
+
+  const deleteImage = useCallback(async (id) => {
+    setIsLoading(true);
+    setErrors(null);
+  
+    try {
+      const response = await authApi.deleteImageRequest(id, token);
+  
+      if (response.status >= 200 && response.status < 300) {
+        await getUser(token);
+        return { success: true, message: response.data.message };
+      }
+    } catch (error) {
+      const formattedError = handleError(error, {
+        fallbackMessage: "Failed to delete image. Please try again later",
+        showToast: false
+      });
+      setErrors(formattedError);
+      return {
+        error: error.response?.data?.error?.message ||
+          "Failed to delete image. Please try again later"
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, getUser]);
   
   useEffect(() => {
     if (errors) {
@@ -238,7 +286,9 @@ export const AuthProvider = ({ children }) => {
     loginUser,
     registerUser,
     logoutUser,
-    getUser
+    getUser,
+    uploadImage,
+    deleteImage
   };
 
   return (

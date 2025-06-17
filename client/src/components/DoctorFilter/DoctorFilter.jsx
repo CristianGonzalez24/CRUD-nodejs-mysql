@@ -31,7 +31,7 @@ const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelecte
                 />
             </div>
 
-            <div className="filters-buttons">
+            {/* <div className="filters-buttons"> */}
                 <button
                     className="filter-toggle-btn"
                     onClick={() => setIsFilterOpen(prev => !prev)}
@@ -41,15 +41,7 @@ const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelecte
                     <SlidersHorizontal size={20} />
                     Filters
                 </button>
-                <button
-                    className="clear-filters-btn"
-                    onClick={clearFilters}
-                    aria-label="Clear filters"
-                    >
-                    <Eraser size={20}/>
-                    Clear Filters
-                </button>
-            </div>
+            {/* </div> */}
 
             <div className={`filters-container ${isFilterOpen ? 'open' : ''}`}>
                 <label htmlFor="specialty-filter" className="visually-hidden">Filter by specialty</label>
@@ -83,6 +75,15 @@ const DoctorFilter = ({ searchTerm, setSearchTerm, selectedSpecialty, setSelecte
                     </>
                 )}
             </div>
+
+            <button
+                className="clear-filters-btn"
+                onClick={clearFilters}
+                aria-label="Clear filters"
+                >
+                <Eraser size={20}/>
+                Clear Filters
+            </button>
         </div>
     )
 }
