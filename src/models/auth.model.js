@@ -1,7 +1,6 @@
 import logger from '../config/logger.js';
 import { pool } from "../config/db.js";
 
-
 export const checkDuplicateUser = async (email) => {
     try {
         logger.info(`Checking for duplicate user with email: ${email}`);
@@ -141,7 +140,6 @@ export const getUserById = async (id) => {
         throw new Error("Database query failed in getUserById");
     }
 };
-
 
 export const updateUserStatus = async (id, isActive) => {    
     try {        

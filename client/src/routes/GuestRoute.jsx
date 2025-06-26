@@ -14,7 +14,6 @@ const GuestRoute = () => {
     );
 
     if (isLogged) {
-        // return <Navigate to="/" replace />;
         return <Navigate to={from} replace />;
     }
 

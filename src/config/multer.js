@@ -1,13 +1,4 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const baseUploadDir = path.join(__dirname, '..', 'uploads');
 
 const fileFilter = (req, file, cb) => {
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -19,40 +10,42 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const userId = req.user?.id || req.body.userId;
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         const userId = req.user?.id || req.body.userId;
 
-        if (!userId) {
-            return cb(new Error('User ID is required to determine upload directory.'));
-        }
+//         if (!userId) {
+//             return cb(new Error('User ID is required to determine upload directory.'));
+//         }
 
-        const userUploadDir = path.join(baseUploadDir, String(userId));
+//         const userUploadDir = path.join(baseUploadDir, String(userId));
 
-        if (!fs.existsSync(userUploadDir)) {
-            fs.mkdirSync(userUploadDir, { recursive: true });
-        }
+//         if (!fs.existsSync(userUploadDir)) {
+//             fs.mkdirSync(userUploadDir, { recursive: true });
+//         }
 
-        cb(null, userUploadDir);
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
+//         cb(null, userUploadDir);
+//     },
+//     filename: (req, file, cb) => {
+//         const ext = path.extname(file.originalname);
 
-        const hash = crypto.createHash('sha256')
-            .update(`${file.originalname}-${Date.now()}-${req.params.id}`)
-            .digest('hex');
+//         const hash = crypto.createHash('sha256')
+//             .update(`${file.originalname}-${Date.now()}-${req.params.id}`)
+//             .digest('hex');
 
-        // const uniqueName = `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+//         // const uniqueName = `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
 
-        cb(null, `${hash}${ext}`);
-    }
-});
+//         cb(null, `${hash}${ext}`);
+//     }
+// });
+
+const storage = multer.memoryStorage();
 
 export const upload = multer({
     storage,
     fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5 MB
+      fileSize: 5 * 1024 * 1024 // 5 MB
     }
 });
 

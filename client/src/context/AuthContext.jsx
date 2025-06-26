@@ -185,7 +185,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const tokenToUse = accessToken || token;
       const response = await authApi.getUserRequest(tokenToUse);
-  
+      
       if (response.status >= 200 && response.status < 300) {
         const userData = response.data;
   
@@ -258,9 +258,31 @@ export const AuthProvider = ({ children }) => {
       });
       setErrors(formattedError);
       return {
-        error: error.response?.data?.error?.message ||
-          "Failed to delete image. Please try again later"
+        error: error.response?.data?.error?.message || "Failed to delete image. Please try again later"
       };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, getUser]);
+
+  const updateUser = useCallback(async (id, data) => {
+    setIsLoading(true);
+    setErrors(null);
+  
+    try {
+      const response = await authApi.updateUserRequest(id, data, token);
+  
+      if (response.status >= 200 && response.status < 300) {
+        await getUser(token);
+        return { success: true, message: response.data.message };
+      }
+    } catch (error) {
+      const formattedError = handleError(error, {
+        fallbackMessage: "Failed to update user. Please try again later",
+        showToast: false
+      });
+      setErrors(formattedError);
+      return { error: error.response.data.error.message || 'Failed to update user. Please try again later' };
     } finally {
       setIsLoading(false);
     }
@@ -288,7 +310,8 @@ export const AuthProvider = ({ children }) => {
     logoutUser,
     getUser,
     uploadImage,
-    deleteImage
+    deleteImage,
+    updateUser
   };
 
   return (

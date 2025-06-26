@@ -21,6 +21,13 @@ export const getDoctors = async (req, res, next) => {
 
     const doctors = await dm.getActiveDoctors(finalLimit, (validPage - 1) * finalLimit);
 
+    if(doctors.length === 0) {
+      return next({
+        message: "No active doctors found",
+        status: 404,
+      });
+    }
+
     logger.info(`Retrieved ${doctors.length} active doctors (page ${validPage}, limit ${finalLimit}).`);
 
     res.status(200).json({
@@ -33,6 +40,30 @@ export const getDoctors = async (req, res, next) => {
     });
   } catch (error) {
     logger.error(`Error retrieving active doctors: ${error.message}`);
+    return next(error);
+  }
+};
+
+export const getSpecialties = async (req, res, next) => {
+  try {
+    const specialties = await dm.getSpecialtiesFromDB();
+
+    if(specialties.length === 0) {
+      return next({
+        message: "No specialties found",
+        status: 200,
+        data: [],
+      });
+    }
+
+    logger.info(`Retrieved ${specialties.length} specialties.`);
+    
+    res.status(200).json({
+      message: "Specialties retrieved successfully",
+      data: specialties,
+    });
+  } catch (error) {
+    logger.error(`Error retrieving specialties: ${error.message}`);
     return next(error);
   }
 };
@@ -56,6 +87,13 @@ export const getAllDoctors = async (req, res, next) => {
     const finalLimit = validLimit === 0 ? totalDoctors : validLimit;
 
     const doctors = await dm.getAllDoctorsFromDB(finalLimit, (validPage - 1) * finalLimit);
+
+    if(doctors.length === 0) {
+      return next({
+        message: "No doctors found",
+        status: 404,
+      });
+    }
 
     logger.info(`Retrieved ${doctors.length} doctors (page ${validPage}, limit ${finalLimit}).`);
 
@@ -172,8 +210,8 @@ export const deactivateDoctor = async (req, res, next) => {
       });
     }
 
-    const success = await dm.deactivateDoctorById(id);
-    if (!success || success.affectedRows === 0) {
+    const result = await dm.deactivateDoctorById(id);
+    if (!result) {
       logger.error(`Failed to deactivate doctor with ID ${id}.`);
       return next({
         message: "Failed to deactivate doctor",
@@ -184,7 +222,7 @@ export const deactivateDoctor = async (req, res, next) => {
     logger.info(`Doctor with ID ${id} marked as inactive successfully.`);
 
     res.status(200).json({
-      message: "Doctor marked as inactive successfully",
+      message: "Doctor deactivated successfully",
       doctorId: id,
     });
   } catch (error) {
@@ -213,7 +251,7 @@ export const activateDoctor = async (req, res, next) => {
 
     const result = await dm.activateDoctorById(id);
 
-    if (!result || result.affectedRows === 0) {
+    if (!result) {
       logger.warn(`Doctor with ID ${id} not found or already active.`);
       return next({
         message: "Doctor not found or already active",
@@ -236,32 +274,15 @@ export const activateDoctor = async (req, res, next) => {
 export const updateDoctor = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const {
-      first_name,
-      last_name,
-      specialty,
-      phone,
-      email,
-      years_of_experience,
-      is_active,
-    } = req.validData;
+    const doctor = req.validData;
     
     if (!Number.isInteger(id) || id <= 0) {  
       logger.warn(`Invalid doctor ID: ${id}`);  
       return next({ message: "Invalid doctor ID", status: 400 });
     }
 
-    const existingDoctor = await dm.getDoctorById(id);
-    if (!existingDoctor) {
-      logger.warn(`Doctor with ID ${id} not found.`);
-      return next({
-        message: "Doctor not found",
-        status: 404,
-      });
-    }
-
-    if (email || phone) {
-      const hasDuplicate = await dm.checkDuplicateDoctor(email, phone, id);
+    if (doctor.email || doctor.phone) {
+      const hasDuplicate = await dm.checkDuplicateDoctor(doctor.email, doctor.phone, id);
       if (hasDuplicate) {
         logger.warn(`Email or phone number already in use by another doctor. ID: ${id}`);
         return next({
@@ -271,17 +292,8 @@ export const updateDoctor = async (req, res, next) => {
       }
     }
 
-    const result = await dm.updateDoctorById(id, {
-      first_name,
-      last_name,
-      specialty,
-      phone,
-      email,
-      years_of_experience,
-      is_active,
-    });
-
-    if (!result || result.affectedRows === 0) {
+    const result = await dm.updateDoctorById(id, doctor);
+    if (!result) {
       logger.error(`Failed to update doctor with ID ${id}.`);
       return next({
         message: "Failed to update the doctor",
@@ -289,20 +301,20 @@ export const updateDoctor = async (req, res, next) => {
       });
     }
 
+    const updateDoctor = await dm.getDoctorById(id);
+      if (!updateDoctor) {
+        logger.error(`Failed to retrieve doctor with ID ${id} from the database.`);
+        return next({
+            message: "Failed to retrieve the updated doctor from the database",
+            status: 500,
+        });
+    }
+
     logger.info(`Doctor with ID ${id} updated successfully.`);
 
     res.status(200).json({
       message: "Doctor updated successfully",
-      updatedDoctor: {
-        id,
-        first_name,
-        last_name,
-        specialty,
-        phone,
-        email,
-        years_of_experience,
-        is_active,
-      },
+      data: updateDoctor
     });
   } catch (error) {
     logger.error(`Failed to update doctor. Error: ${error.message}`);
@@ -317,15 +329,6 @@ export const deleteDoctor = async (req, res, next) => {
     if (!Number.isInteger(id) || id <= 0) {  
       logger.warn(`Invalid doctor ID: ${id}`);  
       return next({ message: "Invalid doctor ID", status: 400 });
-    }
-
-    const existingDoctor = await dm.getDoctorById(id);
-    if (!existingDoctor) {
-      logger.warn(`Doctor with ID ${id} not found.`);
-      return next({
-        message: "Doctor not found",
-        status: 404,
-      });
     }
 
     const result = await dm.deleteDoctorById(id);

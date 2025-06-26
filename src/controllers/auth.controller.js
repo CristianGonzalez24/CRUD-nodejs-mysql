@@ -1,21 +1,25 @@
 import bcrypt from 'bcrypt';
 import jwt from "jsonwebtoken";
 import ms from 'ms';
-import * as fsp from 'fs/promises';
 import * as fs from 'fs';   
+import * as fsp from 'fs/promises';
 import path from 'path';
+import crypto from 'crypto';
+import sharp from 'sharp';
 import logger from '../config/logger.js';
 import { promisify } from "util";
 import * as am from '../models/auth.model.js';
 import { generateTokens } from '../utils/jwt.js';
-import { fileTypeFromFile } from 'file-type';
+import { fileTypeFromBuffer } from 'file-type';
 import { fileURLToPath } from 'url';
 
 process.loadEnvFile();
 
 const verifyAsync = promisify(jwt.verify);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const baseUploadDir = path.join(__dirname, '..', 'uploads');
 
 export const registerUser = async (req, res, next) => {   
     const { username, email, password, role } = req.validData;
@@ -384,27 +388,28 @@ export const hasRefreshToken = (req, res) => {
 
 export const uploadImage = async (req, res, next) => { 
     try { 
-        const userId = req.user.id; 
-        const avatar = req.file; 
+        const userId = req.user.id;
+        const avatar = req.file;
+    
+        if (!avatar) {
+            logger.warn("No file uploaded");
+            return next({ status: 400, message: "No file uploaded" });
+        }
 
-        if (!avatar) { 
-            logger.warn("No file uploaded"); 
-            return next({ status: 400, message: "No file uploaded" }); 
-        } 
-
-        const filePath = avatar.path;
-
-        const fileType = await fileTypeFromFile(filePath);
+        // const filePath = avatar.path;
+        // const fileType = await fileTypeFromFile(filePath);
+        const fileType = await fileTypeFromBuffer(avatar.buffer);
         const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
         if (!fileType || !allowedMimeTypes.includes(fileType.mime)) {
-            await fsp.unlink(filePath);
+            // await fsp.unlink(filePath);
             logger.warn("Rejected invalid image type:", fileType?.mime || 'unknown');
             return next({ status: 400, message: "Invalid file type. Upload a real image (JPEG, PNG, GIF, WEBP)." });
         }
 
         const user = await am.getUserById(userId);
 
+        // Delete old avatar
         if (user.avatar && user.avatar.startsWith(`/uploads/${userId}/`)) {
             const cleanedPath = user.avatar.startsWith('/') ? user.avatar.slice(1) : user.avatar;
             const oldImagePath = path.join(__dirname, '..', cleanedPath);
@@ -418,20 +423,41 @@ export const uploadImage = async (req, res, next) => {
             logger.info("No local avatar found to delete (maybe social or null).");
         }
 
-        const imageUrl = `/uploads/${userId}/${avatar.filename}`;
-        const result = await am.uploadImage(userId, imageUrl); 
+        // Create upload directory if it doesn't exist
+        const userUploadDir = path.join(baseUploadDir, String(userId));
+        if (!fs.existsSync(userUploadDir)) {
+            fs.mkdirSync(userUploadDir, { recursive: true });
+        }
 
-        if (!result) { 
-            logger.error("Failed to upload image"); 
-            return next({ status: 500, message: "Failed to upload image" }); 
-        } 
+        // Generate output filename 
+        const outputFilename = crypto.createHash('sha256')
+            .update(`${Date.now()}-${Math.random()}`)
+            .digest('hex') + '.webp';
 
-        logger.info(`Image uploaded for user ID: ${userId}`);  
+        // Sharp
+        // const outputFilename = avatar.filename.replace(path.extname(avatar.filename), '.webp');
+        // const outputPath = path.join(__dirname, '..', 'uploads', String(userId), outputFilename);
+        const outputPath = path.join(userUploadDir, outputFilename);
 
-        res.status(200).json({ 
+        await sharp(avatar.buffer)
+            .resize(512, 512, { fit: 'cover' })
+            .webp({ quality: 80 })
+            .withMetadata({ exif: {} })
+            .toFile(outputPath);
+
+        const imageUrl = `/uploads/${userId}/${outputFilename}`;
+        const result = await am.uploadImage(userId, imageUrl);
+
+        if (!result) {
+            logger.error("Failed to upload image");
+            return next({ status: 500, message: "Failed to upload image" });
+        }
+
+        logger.info(`Image uploaded for user ID: ${userId}`);
+        res.status(200).json({
             message: "Profile image updated successfully",
             imageUrl
-        }); 
+        });
 
     } catch (error) {
         logger.error(`Error uploading image: ${error.message}`); 
@@ -453,11 +479,11 @@ export const removeProfilePicture = async (req, res, next) => {
             const cleanedPath = user.avatar.startsWith('/') ? user.avatar.slice(1) : user.avatar;
             const imagePath = path.join(__dirname, '..', cleanedPath);
 
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+            try {
+                await fsp.unlink(imagePath);
                 logger.info(`Deleted profile image for user ${userId}: ${imagePath}`);
-            } else {
-                logger.warn(`Image not found or does not exist: ${imagePath}`);
+            } catch (err) {
+                logger.warn(`Image not found or could not be deleted: ${imagePath}`);
             }
         }     
 

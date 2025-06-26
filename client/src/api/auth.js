@@ -21,3 +21,8 @@ export const deleteImageRequest = (id, token) => axios.delete(`/auth/${id}/remov
     Authorization: `Bearer ${token}`,
   },
 });
+export const updateUserRequest = (id, data, token) => axios.patch(`/auth/users/${id}`, data, {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+})

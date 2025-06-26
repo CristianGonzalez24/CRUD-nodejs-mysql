@@ -9,11 +9,11 @@ import {
 } from 'lucide-react';
 import './styles/AccountPage.css'
 import LoadingSpinner from '../components/LoadingSpinner/LoadingSpinner';
+import { ENV } from '../config/ENV.js';
 
 const AccountPage = () => {
-  const { user, isLoading, logoutUser, uploadImage, deleteImage } = useAuth();
+  const { user, isLoading, logoutUser, uploadImage, deleteImage, updateUser } = useAuth();
   const showNotification = useNotification();
-  console.log(user);
 
   if (isLoading) {
     return (
@@ -23,84 +23,51 @@ const AccountPage = () => {
     );
   }
 
-  useEffect(() => {
-    if (user?.avatar) {
-      setImageUser(user.avatar);
-    }
-  }, [user?.avatar]);
+  const navigate = useNavigate();
 
-  // const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    notifications: false,
+  const [originalValues, setOriginalValues] = useState({
+    username: user?.username || '',
+    email: user?.email || ''
+    // notifications: user?.notifications || false
   });
 
-  // const [originalUser, setOriginalUser] = useState(null);
-  // const [isEditing, setIsEditing] = useState(false);
-  // const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    username: user?.username || '',
+    email: user?.email || ''
+    // notifications: user?.notifications || false
+  });
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [imageUser, setImageUser] = useState(user?.avatar || null);
   const [imagePreview, setImagePreview] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  // const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [errors, setErrors] = useState({});
 
   const fileInputRef = useRef(null);
-  // const formRef = useRef(null);
+  const formRef = useRef(null);
 
-  // useEffect(() => {
-  //   if (user) {
-  //     const safeUser = {
-  //       name: user.username || '',
-  //       email: user.email || '',
-  //       notifications: user.notifications ?? false, 
-  //     };
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth/login');
+      return;
+    }
   
-  //     setFormData({...safeUser});
-  //     setOriginalUser({...safeUser});
-  //   } else {
-  //     navigate('/login');
-  //   }
-  // }, [user]);
+    const initialValues = {
+      username: user.username || '',
+      email: user.email || ''
+      // notifications: user.notifications || false
+    };
+
+    setOriginalValues(initialValues);
+    setFormData(initialValues);
+    setImageUser(user.avatar || null);
+  }, [user, navigate]);
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
   };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    // if (!file.type.startsWith('image/')) {
-    //   showNotification({
-    //     type: 'error',
-    //     message: 'Only JPG, JPEG, PNG or WEBP images are allowed.',
-    //     autoClose: true,
-    //     position: 'top-center'
-    //   })
-    //   return;
-    // }
-
-    const maxSizeInMB = 5;
-    if (file.size > maxSizeInMB * 1024 * 1024) {
-      showNotification({
-        type: 'error',
-        message: `Please select an image file smaller than ${maxSizeInMB}MB.`,
-        autoClose: true,
-        position: 'top-center'
-      })
-      return;
-    }
-
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-    }
-  
-    const previewURL = URL.createObjectURL(file);
-    setImagePreview(previewURL);
-  }
 
   const handleImageClose = () => {
     if (imagePreview) {
@@ -112,6 +79,43 @@ const AccountPage = () => {
       fileInputRef.current.value = '';
     }
   };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    const isImage = file.type.startsWith('image/');
+    const maxSize = ENV.IMAGE_MAX_SIZE || 5;
+
+    if (!file) return;
+
+    if (!isImage) {
+      showNotification({
+        type: 'error',
+        message: 'Only JPG, JPEG, PNG or WEBP images are allowed.',
+        autoClose: true,
+        position: 'top-center'
+      })
+      handleImageClose();
+      return;
+    }
+
+    if (file.size > maxSize * 1024 * 1024) {
+      showNotification({
+        type: 'error',
+        message: `Please select an image file smaller than ${maxSize}MB.`,
+        autoClose: true,
+        position: 'top-center'
+      })
+      handleImageClose();
+      return;
+    }
+
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+  
+    const previewURL = URL.createObjectURL(file);
+    setImagePreview(previewURL);
+  }
 
   const handleSubmitAvatar = async () => {
     if (!fileInputRef.current?.files?.[0]) {
@@ -139,15 +143,6 @@ const AccountPage = () => {
           message: result.message,
           autoClose: true
         })
-
-        if (imagePreview) {
-          URL.revokeObjectURL(imagePreview);
-          setImagePreview(null);
-        }
-
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
       } else {
         showNotification({
           type: 'error',
@@ -157,6 +152,8 @@ const AccountPage = () => {
       }
     } catch (error) {
       setErrors({ avatar: 'Failed to update avatar' });
+    } finally {
+      handleImageClose();
     }
   }
 
@@ -178,111 +175,113 @@ const AccountPage = () => {
       }
     } catch (error) {
       setErrors({ avatar: 'Failed to delete avatar' });
+    } finally {
+      handleImageClose();
     }
   }
   
-  // const handleInputChange = (e) => {
-  //   const { name, value, type, checked } = e.target;
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     [name]: type === 'checkbox' ? checked : value
-  //   }));
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
 
-  //   if (errors[name]) {
-  //     setErrors(prev => ({ ...prev, [name]: '' }));
-  //   }    
-  // };
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }    
+  };
 
-  // const validateForm = () => {
-  //   const newErrors = {};
+  const validateForm = () => {
+    const newErrors = {};
     
-  //   if (!formData.name.trim()) {
-  //     newErrors.name = 'Name is required';
-  //   }
+    if (!formData.username.trim()) {
+      newErrors.username = 'Username is required';
+    }
     
-  //   if (!formData.email.trim()) {
-  //     newErrors.email = 'Email is required';
-  //   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-  //     newErrors.email = 'Please enter a valid email address';
-  //   }
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
     
-  //   // if (formData.phone && !/^\+?[\d\s-]{10,}$/.test(formData.phone.trim())) {
-  //   //   newErrors.phone = 'Please enter a valid phone number';
-  //   // }
+    // if (formData.phone && !/^\+?[\d\s-]{10,}$/.test(formData.phone.trim())) {
+    //   newErrors.phone = 'Please enter a valid phone number';
+    // }
 
-  //   setErrors(newErrors);
-  //   return Object.keys(newErrors).length === 0;
-  // };
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!isEditing) return;
 
-  //   if (!isEditing) return;
-    
-  //   if (!validateForm()) {
-  //     const firstError = formRef.current?.querySelector('[aria-invalid="true"]');
-  //     firstError?.focus();
-  //     return;
-  //   }
+    if (!validateForm()) {
+      const firstError = formRef.current?.querySelector('[aria-invalid="true"]');
+      firstError?.focus();
+      return;
+    }
 
-  //   setIsSaving(true);
+    setIsSaving(true);
 
-  //   try {
-  //     // Simulate API call
-  //     await new Promise(resolve => setTimeout(resolve, 1500));
-      
-  //     await updateUser({
-  //       ...formData,
-  //       avatar: imagePreview
-  //     });
+    try {
+      const result = await updateUser(user.id, formData);
+      console.log('[handleSubmit] Resultado updateUser:', result);
+      console.log('[handleSubmit] Enviando formData:', formData);
 
-  //     setNotification({
-  //       type: 'success',
-  //       message: 'Profile updated successfully'
-  //     });
-  //     setIsEditing(false);
-  //     setErrors({});
-  //     setImagePreview(null);
-  //   } catch (error) {
-  //     setNotification({
-  //       type: 'error',
-  //       message: 'Failed to update profile. Please try again.'
-  //     });
-  //   } finally {
-  //     setIsSaving(false);
-  //     setNotification(null);
-  //   }
-  // };
+      if (result?.success) {
+        showNotification({
+          type: 'success',
+          message: result.message,
+          autoClose: true
+        })
+        setIsEditing(false);
+        setErrors({});
+        setFormData(originalValues);
+      } else {
+        showNotification({
+          type: 'error',
+          message: result.error,
+          autoClose: false
+        })
+      }
+    } catch (error) {
+      setErrors({ submit: 'Failed to update profile. Please try again.' });
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
-  // const handleEditToggle = () => {
-  //   if (isEditing) {
-  //     setFormData({ ...originalUser });
-  //     setErrors({});
-  //   }
+  const handleEditToggle = () => {
+    if (isEditing) {
+      setFormData({ ...originalValues });
+      setErrors({});
+    }
+    setIsEditing(prev => !prev);
+  }
   
-  //   setIsEditing(prev => !prev);
-  // };
-  
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate('/');
+    } catch (error) {
+      showNotification({
+        type: 'error',
+        message: 'Failed to log out. Please try again.',
+        autoClose: true
+      })
+    }
+  }
 
-  // const handleLogout = async () => {
-  //   try {
-  //     await logoutUser();
-  //     navigate('/');
-  //   } catch (error) {
-  //     setNotification({
-  //       type: 'error',
-  //       message: 'Failed to log out. Please try again.'
-  //     });
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   return () => {
-  //     if (imagePreview) {
-  //       URL.revokeObjectURL(imagePreview);
-  //     }
-  //   };
-  // }, [imagePreview]);
+  const isFormDirty = () => {
+    return (
+      formData.username !== originalValues.username ||
+      formData.email !== originalValues.email
+      // formData.notifications !== originalValues.notifications
+      // formData.phone !== originalValues.phone ||
+    );
+  };
   
   return (
     <div className="account-page">
@@ -333,7 +332,7 @@ const AccountPage = () => {
               </div>
             </div>
 
-            <div className="custom-file-upload-container">
+            <div className="file-upload-container">
               <label htmlFor="avatar-upload" className="btn btn-primary">
                 Select Image
               </label>
@@ -366,7 +365,7 @@ const AccountPage = () => {
                 <div className="image-preview-actions">
                   <button
                     type="button"
-                    className="save-button"
+                    className="action-btn action-btn-primary"
                     onClick={handleSubmitAvatar} 
                     aria-label="Save profile picture"
                     disabled={isLoading}
@@ -375,7 +374,7 @@ const AccountPage = () => {
                   </button>
                   <button
                     type="button"
-                    className="btn-danger cancel-button"
+                    className="action-btn action-btn-danger"
                     onClick={handleImageClose}
                     aria-label="Close image preview"
                     disabled={isLoading}
@@ -400,17 +399,17 @@ const AccountPage = () => {
           </div>
         </div>
 
-        {/* <form 
+        <form 
           ref={formRef}
           onSubmit={handleSubmit} 
           className="account-form"
           noValidate
         >
-          <div className="form-header">
+          <div className="form-header-account">
             <h2>Account Settings</h2>
             <button
               type="button"
-              className="edit-button"
+              className="action-btn action-btn-primary"
               disabled={!user}
               onClick={handleEditToggle}
             >
@@ -420,25 +419,25 @@ const AccountPage = () => {
 
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="name">
+              <label htmlFor="username">
                 <User size={18} />
                 Full Name
               </label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                value={formData.name}
+                id="username"
+                name="username"
+                value={formData.username}
                 onChange={handleInputChange}
                 disabled={!isEditing}
-                className={errors.name ? 'error' : ''}
-                aria-invalid={errors.name ? 'true' : 'false'}
-                aria-describedby={errors.name ? 'name-error' : undefined}
+                className={errors.username ? 'error' : ''}
+                aria-invalid={errors.username ? 'true' : 'false'}
+                aria-describedby={errors.username ? 'username-error' : undefined}
               />
-              {errors.name && (
-                <span className="error-message" id="name-error" role="alert">
+              {errors.username && (
+                <span className="error-message" id="username-error" role="alert">
                   <AlertCircle size={16} />
-                  {errors.name}
+                  {errors.username}
                 </span>
               )}
             </div>
@@ -465,7 +464,7 @@ const AccountPage = () => {
                   {errors.email}
                 </span>
               )}
-            </div> */}
+            </div>
 
             {/* <div className="form-group">
               <label htmlFor="phone">
@@ -502,15 +501,15 @@ const AccountPage = () => {
                 />
                 <span>Receive email notifications</span>
               </label>
-            </div>
-          </div>
+            </div> */}
+          </div> 
 
           {isEditing && (
             <div className="form-actions">
               <button
                 type="submit"
                 className="btn btn-primary save-btn"
-                disabled={isSaving}
+                disabled={isSaving || !isFormDirty()}
               >
                 {isSaving ? (
                   <>
@@ -536,6 +535,7 @@ const AccountPage = () => {
         </div>
 
         <ConfirmationModal
+          loading={isLoading}
           isOpen={showLogoutModal}
           onClose={() => setShowLogoutModal(false)}
           onConfirm={handleLogout}
@@ -544,8 +544,9 @@ const AccountPage = () => {
           type="warning"
           confirmText="Log Out"
           cancelText="Cancel"
-        /> */}
+        />
         <ConfirmationModal
+          loading={isLoading}
           isOpen={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleDeleteAvatar}

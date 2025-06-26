@@ -13,8 +13,7 @@ const EmergencyModal = ({ isOpen, onClose }) => {
 
     const emergencyNumbers = [
         { label: 'Emergency Ambulance', number: '911' },
-        { label: 'Hospital Hotline', number: '(555) 123-4567' },
-        { label: 'Poison Control', number: '1-800-222-1222' }
+        { label: 'Hospital Hotline', number: '(555) 123-4567' }
     ];
     
     const nearbyHospitals = [

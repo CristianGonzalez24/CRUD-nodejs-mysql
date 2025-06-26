@@ -1,23 +1,6 @@
 import logger from '../config/logger.js';
 import { pool } from "../config/db.js";
 
-export const getActiveDoctors = async (limit, offset) => {
-    try {
-        logger.info(`Fetching active doctors. Limit: ${limit}, Offset: ${offset}`);
-
-        const [rows] = await pool.query(
-            `SELECT * FROM doctors WHERE is_active = TRUE LIMIT ? OFFSET ?`,
-            [limit, offset]
-        );
-
-        logger.info(`Retrieved ${rows.length} active doctors`);
-        return rows;
-    } catch (error) {
-        logger.error(`Failed to retrieve active doctors. Limit: ${limit}, Offset: ${offset}. Error: ${error.message}`);
-        throw new Error("Database query failed while fetching active doctors");
-    }
-};
-
 export const countActiveDoctors = async () => {
     try {
         logger.info("Counting active doctors...");
@@ -39,22 +22,57 @@ export const countActiveDoctors = async () => {
     }
 };
 
-export const getAllDoctorsFromDB = async (limit, offset) => {
+export const getActiveDoctors = async (limit, offset) => {
     try {
-        logger.info(`Fetching all doctors. Limit: ${limit}, Offset: ${offset}`);
+        logger.info(`Fetching active doctors. Limit: ${limit}, Offset: ${offset}`);
 
-        const [rows] = await pool.query(
-            `SELECT * FROM doctors LIMIT ? OFFSET ?`,
-            [limit, offset]
+        const [doctors] = await pool.query(
+        `SELECT * FROM doctors WHERE is_active = TRUE LIMIT ? OFFSET ?`,
+        [limit, offset]
         );
 
-        logger.info(`Successfully retrieved ${rows.length} doctors.`);
-        return rows;
+        for (const doctor of doctors) {
+            const [availability] = await pool.query(
+                `SELECT day_of_week AS day, start_time AS 'from', end_time AS 'to'
+                FROM doctor_schedule
+                WHERE doctor_id = ?`,
+                [doctor.id]
+            );
+            doctor.availability = availability;
+
+            const [specialties] = await pool.query(
+                `SELECT s.name 
+                FROM doctor_specialties ds
+                JOIN specialties s ON s.id = ds.specialty_id
+                WHERE ds.doctor_id = ?`,
+                [doctor.id]
+            );
+            doctor.specialties = specialties.map(row => row.name);
+        }
+
+        logger.info(`Retrieved ${doctors.length} active doctors`);
+        return doctors;
     } catch (error) {
-        logger.error(`Failed to retrieve doctors. Limit: ${limit}, Offset: ${offset}. Error: ${error.message}`);
-        throw new Error("Database query failed while fetching doctors");
+        logger.error(`Failed to retrieve active doctors with schedules. Error: ${error.message}`);
+        throw new Error("Database query failed while fetching active doctors with schedule");
     }
-};
+};  
+
+export const getSpecialtiesFromDB = async () => {
+    try {
+        logger.info("Fetching specialties from the database");
+
+        const [rows] = await pool.query(
+            `SELECT * FROM specialties`
+        )
+
+        logger.info(`Retrieved ${rows.length} specialties`);
+        return rows
+    } catch (error) {
+        logger.error(`Failed to retrieve specialties. Error: ${error.message}`);
+        throw new Error("Database query failed while fetching specialties");
+    }
+}
 
 export const countAllDoctors = async () => {
     try {
@@ -74,6 +92,42 @@ export const countAllDoctors = async () => {
     } catch (error) {
         logger.error(`Failed to count doctors. Error: ${error.message}`);
         throw new Error("Failed to count doctors in the database");
+    }
+};
+
+export const getAllDoctorsFromDB = async (limit, offset) => {
+    try {
+        logger.info(`Fetching all doctors. Limit: ${limit}, Offset: ${offset}`);
+
+        const [doctors] = await pool.query(
+            `SELECT * FROM doctors LIMIT ? OFFSET ?`,
+            [limit, offset]
+        );
+
+        for (const doctor of doctors) {
+            const [availability] = await pool.query(
+            `SELECT day_of_week AS day, start_time AS 'from', end_time AS 'to'
+                FROM doctor_schedule
+                WHERE doctor_id = ?`,
+            [doctor.id]
+            );
+            doctor.availability = availability;
+
+            const [specialties] = await pool.query(
+            `SELECT s.name 
+                FROM doctor_specialties ds
+                JOIN specialties s ON s.id = ds.specialty_id
+                WHERE ds.doctor_id = ?`,
+            [doctor.id]
+            );
+            doctor.specialties = specialties.map(row => row.name);
+        }
+
+        logger.info(`Successfully retrieved ${doctors.length} doctors.`);
+        return doctors;
+    } catch (error) {
+        logger.error(`Failed to retrieve all doctors. Error: ${error.message}`);
+        throw new Error("Database query failed while fetching all doctors");
     }
 };
 
@@ -105,53 +159,129 @@ export const findDoctorByEmailOrPhone = async (email, phone) => {
     }
 };
 
-export const createDoctorInDB = async (doctor) => {
-    try {
-        logger.info(`Creating new doctor: ${JSON.stringify(doctor)}`);
+export const createDoctorInDB = async ({
+    first_name,
+    last_name,
+    phone,
+    email,
+    years_of_experience = 0,
+    is_active = true,
+    specialties = [],       
+    availability = []      
+    }) => {
+    const connection = await pool.getConnection();
 
-        const [result] = await pool.query(
-            `INSERT INTO doctors (first_name, last_name, specialty, phone, email, years_of_experience, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [
-                doctor.first_name,
-                doctor.last_name,
-                doctor.specialty,
-                doctor.phone,
-                doctor.email,
-                doctor.years_of_experience || 0,
-                true, 
-            ]
+    try {
+        await connection.beginTransaction();
+        logger.info(`Creating new doctor: ${first_name} ${last_name}`);
+
+        // Doctor
+        const [result] = await connection.query(
+            `INSERT INTO doctors 
+                (first_name, last_name, phone, email, years_of_experience, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+            [first_name, last_name, phone, email, years_of_experience, is_active]
         );
 
-        if (!result || result.affectedRows === 0) {
-            logger.error("Failed to create doctor: No rows affected");
-            return null;
+        const doctorId = result.insertId;
+
+        if (!doctorId) {
+            throw new Error("Failed to create doctor: insertId missing");
         }
 
-        logger.info(`Doctor created successfully with ID: ${result.insertId}`);
-        return result.insertId;
+        // Specialties
+        for (const specialtyName of specialties) {
+        const [[specialty]] = await connection.query(
+            `SELECT id FROM specialties WHERE name = ? LIMIT 1`,
+            [specialtyName]
+        );
+
+        if (!specialty) {
+            throw new Error(`Specialty "${specialtyName}" not found`);
+        }
+
+        await connection.query(
+            `INSERT INTO doctor_specialties (doctor_id, specialty_id) VALUES (?, ?)`,
+            [doctorId, specialty.id]
+        );
+        }
+
+        // Availability
+        const dayMap = {
+            Monday: 'mon',
+            Tuesday: 'tue',
+            Wednesday: 'wed',
+            Thursday: 'thu',
+            Friday: 'fri',
+            Saturday: 'sat',
+            Sunday: 'sun',
+        };          
+
+        for (const slot of availability) {
+            const { day, from, to } = slot;
+            
+            if (!day || !from || !to) {
+                throw new Error(`Invalid availability slot: ${JSON.stringify(slot)}`);
+            }
+            
+            const dbDay = dayMap[day];
+            if (!dbDay) {
+                throw new Error(`Invalid day provided in availability: "${day}". Must be a valid weekday name.`);
+            }
+            
+            await connection.query(
+                `INSERT INTO doctor_schedule 
+                (doctor_id, day_of_week, start_time, end_time) 
+                VALUES (?, ?, ?, ?)`,
+                [doctorId, dbDay, from, to]
+            );
+        }
+
+        await connection.commit();
+        logger.info(`Doctor created successfully with ID: ${doctorId}`);
+        return doctorId;
+
     } catch (error) {
-        logger.error(`Database query failed in createDoctorInDB. Error: ${error.message}`);
-        throw new Error("Database query failed in createDoctorInDB");
+        await connection.rollback();
+        logger.error(`Failed to create doctor. Error: ${error.message}`);
+        throw new Error(`Failed to create doctor: ${error.message}`);
+    } finally {
+        connection.release();
     }
 };
 
 export const getDoctorById = async (id) => {
-    if (!id) {
-        logger.warn("Doctor ID is required but was not provided.");
-        return null;
-    }
-
     try {
         logger.info(`Fetching doctor with ID: ${id}`);
-        const [rows] = await pool.query('SELECT * FROM doctors WHERE id = ?', [id]);
-        const doctor = rows[0] || null;
 
+        const [doctorRows] = await pool.query(
+            `SELECT * FROM doctors WHERE id = ?`,
+            [id]
+        );
+
+        const doctor = doctorRows[0] || null;
         if (!doctor) {
             logger.warn(`Doctor with ID ${id} not found.`);
             return null;
         }
 
+        const [availabilityRows] = await pool.query(
+            `SELECT day_of_week AS day, start_time AS 'from', end_time AS 'to'
+            FROM doctor_schedule
+            WHERE doctor_id = ?`,
+            [id]
+        );
+        doctor.availability = availabilityRows;
+
+        const [specialtyRows] = await pool.query(
+            `SELECT s.name 
+            FROM doctor_specialties ds
+            JOIN specialties s ON s.id = ds.specialty_id
+            WHERE ds.doctor_id = ?`,
+            [id]
+        );
+        doctor.specialties = specialtyRows.map(row => row.name);
+    
         logger.info(`Doctor found: ${JSON.stringify(doctor)}`);
         return doctor;
     } catch (error) {
@@ -205,12 +335,6 @@ export const activateDoctorById = async (id) => {
 };
 
 export const checkDuplicateDoctor = async (email, phone, id) => {
-    if (!email && !phone) {
-        const errorMsg = "Both email and phone are missing in checkDuplicateDoctor";
-        logger.error(errorMsg);
-        throw new Error(errorMsg);
-    }
-
     try {
         logger.info(`Checking for duplicate doctor with email: ${email}, phone: ${phone}, excluding ID: ${id}`);
 
@@ -232,66 +356,159 @@ export const checkDuplicateDoctor = async (email, phone, id) => {
     }
 };
 
-export const updateDoctorById = async (
-    id,
-    { first_name, last_name, specialty, phone, email, years_of_experience, is_active }
-) => {
+export const updateDoctorById = async (id, {
+    first_name,
+    last_name,
+    phone,
+    email,
+    years_of_experience = 0,
+    is_active = true,
+    specialties = [],      
+    availability = []    
+    }) => {
+    const connection = await pool.getConnection();
+
     try {
+        await connection.beginTransaction();
         logger.info(`Updating doctor with ID: ${id}`);
 
-        const [result] = await pool.query(
-            `UPDATE doctors SET 
-                first_name = COALESCE(?, first_name),
-                last_name = COALESCE(?, last_name),
-                specialty = COALESCE(?, specialty),
-                phone = COALESCE(?, phone),
-                email = COALESCE(?, email),
-                years_of_experience = COALESCE(?, years_of_experience),
-                is_active = COALESCE(?, is_active)
-            WHERE id = ?`,
-            [
-                first_name,
-                last_name,
-                specialty,
-                phone,
-                email,
-                years_of_experience,
-                is_active,
-                id,
-            ]
+        // 1. Actualizar datos básicos
+        await connection.query(
+        `UPDATE doctors SET 
+            first_name = COALESCE(?, first_name),
+            last_name = COALESCE(?, last_name),
+            phone = COALESCE(?, phone),
+            email = COALESCE(?, email),
+            years_of_experience = COALESCE(?, years_of_experience),
+            is_active = COALESCE(?, is_active),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?`,
+        [
+            first_name,
+            last_name,
+            phone,
+            email,
+            years_of_experience,
+            is_active,
+            id
+        ]
         );
 
-        if (result.affectedRows > 0) {
-            logger.info(`Doctor with ID: ${id} updated successfully.`);
-            return true;
-        } else {
-            logger.warn(`No changes were made for doctor with ID: ${id}`);
-            return false;
+        // 2. Actualizar especialidades
+        if (Array.isArray(specialties)) {
+            await connection.query(
+                `DELETE FROM doctor_specialties WHERE doctor_id = ?`,
+                [id]
+            );
+
+            for (const specialtyName of specialties) {
+                const [[specialty]] = await connection.query(
+                `SELECT id FROM specialties WHERE name = ? LIMIT 1`,
+                [specialtyName]
+                );
+
+                if (!specialty) {
+                throw new Error(`Specialty "${specialtyName}" not found`);
+                }
+
+                await connection.query(
+                `INSERT INTO doctor_specialties (doctor_id, specialty_id) VALUES (?, ?)`,
+                [id, specialty.id]
+                );
+            }
         }
+
+        // 3. Actualizar disponibilidad
+        if (Array.isArray(availability)) {
+            await connection.query(
+                `DELETE FROM doctor_schedule WHERE doctor_id = ?`,
+                [id]
+            );
+
+            const dayMap = {
+                Monday: 'mon',
+                Tuesday: 'tue',
+                Wednesday: 'wed',
+                Thursday: 'thu',
+                Friday: 'fri',
+                Saturday: 'sat',
+                Sunday: 'sun',
+            };          
+    
+            for (const slot of availability) {
+                const { day, from, to } = slot;
+                
+                if (!day || !from || !to) {
+                    throw new Error(`Invalid availability slot: ${JSON.stringify(slot)}`);
+                }
+                
+                const dbDay = dayMap[day];
+                if (!dbDay) {
+                    throw new Error(`Invalid day provided in availability: "${day}". Must be a valid weekday name.`);
+                }
+                
+                await connection.query(
+                    `INSERT INTO doctor_schedule 
+                    (doctor_id, day_of_week, start_time, end_time) 
+                    VALUES (?, ?, ?, ?)`,
+                    [id, dbDay, from, to]
+                );
+            }
+        }
+
+        await connection.commit();
+        logger.info(`Doctor with ID ${id} updated successfully.`);
+        return true;
+
     } catch (error) {
-        logger.error(`Failed to update doctor with ID: ${id || "Unknown ID"}. Error: ${error.message}`);
+        await connection.rollback();
+        logger.error(`Failed to update doctor with ID ${id}. Error: ${error.message}`);
         throw new Error(`Failed to update doctor: ${error.message}`);
+    } finally {
+        connection.release();
     }
 };
 
 export const deleteDoctorById = async (id) => {
+    const connection = await pool.getConnection();
+
     try {
+        await connection.beginTransaction();
         logger.info(`Attempting to delete doctor with ID: ${id}`);
 
-        const [result] = await pool.query(
-            "DELETE FROM doctors WHERE id = ?",
-            [id]
+        // 1. Eliminar disponibilidad
+        await connection.query(
+        `DELETE FROM doctor_schedule WHERE doctor_id = ?`,
+        [id]
         );
 
-        if (result.affectedRows > 0) {
-            logger.info(`Doctor with ID: ${id} deleted successfully.`);
-            return result;
-        } else {
+        // 2. Eliminar especialidades
+        await connection.query(
+        `DELETE FROM doctor_specialties WHERE doctor_id = ?`,
+        [id]
+        );
+
+        // 3. Eliminar doctor
+        const [result] = await connection.query(
+        `DELETE FROM doctors WHERE id = ?`,
+        [id]
+        );
+
+        if (result.affectedRows === 0) {
+            await connection.rollback();
             logger.warn(`No doctor found with ID: ${id}, deletion not performed.`);
             return null;
         }
+
+        await connection.commit();
+        logger.info(`Doctor with ID: ${id} deleted successfully.`);
+        return result;
+
     } catch (error) {
+        await connection.rollback();
         logger.error(`Failed to delete doctor with ID: ${id || "Unknown ID"}. Error: ${error.message}`);
         throw new Error(`Failed to delete doctor: ${error.message}`);
+    } finally {
+        connection.release();
     }
 };

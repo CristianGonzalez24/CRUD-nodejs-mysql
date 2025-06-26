@@ -14,6 +14,8 @@ export const DoctorsProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState(null);
 
+    console.log(doctors);
+
     const getDoctors = useCallback(async () => {
         setLoading(true);
         setErrors(null);
@@ -21,10 +23,10 @@ export const DoctorsProvider = ({ children }) => {
 
         try {
             const response = isAdmin ? await doctorsApi.getAllDoctorsRequest() : await doctorsApi.getDoctorsRequest();
+            const specialties = await doctorsApi.getSpecialtiesRequest();
             if (isMounted) {
                 setDoctors(response.data.data);
-                const uniqueSpecializations = [...new Set(response.data.data.map(doctor => doctor.specialty))];
-                setSpecializations(uniqueSpecializations);
+                setSpecializations(specialties.data.data);
             }
         } catch (error) {
             if(isMounted) {
@@ -179,7 +181,7 @@ export const DoctorsProvider = ({ children }) => {
     useEffect(() => {
         if (errors) {
             const timer = setTimeout(() => {
-            setErrors(null);
+                setErrors(null);
             }, 8000);
         
             return () => clearTimeout(timer);

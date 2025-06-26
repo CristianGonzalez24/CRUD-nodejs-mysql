@@ -106,7 +106,6 @@ const LoginPage = () => {
             const result = await loginUser(formData.email, formData.password, formData.rememberMe, returnUrl);
 
             if (result.success) {
-                // await getUser();
                 setFormData({
                     email: '',
                     password: '',

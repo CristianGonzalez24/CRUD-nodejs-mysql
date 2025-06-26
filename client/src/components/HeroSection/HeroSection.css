@@ -42,10 +42,6 @@
     display: flex;
     gap: 1rem;
 }
-.emergency-btn{
-    position: relative;
-    overflow: hidden;
-}
 .emergency-btn::before{
     content: '';
     position: absolute;

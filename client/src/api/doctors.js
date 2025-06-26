@@ -2,6 +2,7 @@ import axios from "../config/axios";
 
 export const getDoctorsRequest = () => axios.get('/doctors?limit=0');
 export const getAllDoctorsRequest = () => axios.get('/doctors/all?limit=0');
+export const getSpecialtiesRequest = () => axios.get('/doctors/specialties');
 export const getDoctorByIdRequest = (id) => axios.get(`/doctors/${id}`);
 
 export const deactivateDoctorRequest = (id) => axios.patch(`/doctors/${id}/deactivate`);
