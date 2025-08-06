@@ -246,7 +246,7 @@ This project is ready for deployment on platforms such as [Render](https://rende
 ## 🎯 Future Improvements
 - ✅ Implement user authentication and JWT authorization (completed)
 - ✅ Implement user authentication and JWT authorization (completed)
-- 🚧 Improve global error handling with a custom error handler
+- 🚧 Improve global error handling with a custom error handler (completed)
 - 🧪 Complete tests for new user-related endpoints
 - 🌐 Add deployment configuration for production environments
 - ✉️ Add email notifications for user registration and password recovery
