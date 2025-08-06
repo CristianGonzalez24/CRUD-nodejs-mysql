@@ -23,7 +23,7 @@ The project follows a **modular and scalable architecture**, with **Zod** used f
 - **Frontend:** React + Vite *(included in the same repository, developed separately)*
 
 ## 📂 Folder Structure
-
+```bash
 /project-root
 ├── backend/
 │   ├── __mocks__/           # Mocked modules for unit testing
@@ -50,6 +50,7 @@ The project follows a **modular and scalable architecture**, with **Zod** used f
 ├── jest.config.js           # Jest configuration
 ├── LICENSE                  # Project license
 └── README.md                # Project documentation
+```
 
 ---
 
