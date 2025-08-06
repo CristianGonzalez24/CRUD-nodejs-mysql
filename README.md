@@ -174,22 +174,6 @@ The frontend app will run at:
 ## 🐝 API Endpoints
 All routes follow RESTful conventions.
 
-### **🔹 Doctors Routes**
-| Method | Endpoint               | Description |
-|--------|------------------------|-------------|
-| GET    | `/doctors`             | Get a paginated list of active doctors |
-| GET    | `/doctors/all`         | Get a paginated list of all doctors |
-| POST   | `/doctors`             | Create a new doctor (requires validation) |
-| PUT    | `/doctors/:id`         | Update doctor details |
-| DELETE | `/doctors/:id`         | Soft delete a doctor |
-| PATCH  | `/doctors/:id/deactivate` | Mark a doctor as inactive |
-| PATCH  | `/doctors/:id/activate` | Reactivate a doctor |
-
-**For detailed API documentation, visit:** `http://localhost:3000/api-docs`
-
-## 🐝 API Endpoints
-All routes follow RESTful conventions.
-
 ---
 
 ### 🔹 Doctors Routes
@@ -220,6 +204,8 @@ All routes follow RESTful conventions.
 | PATCH  | `/users/:id/activate`            | Activates or deactivates a user by ID. Only accessible by admin users |
 | PATCH  | `/users/:id/password`            | Update password *(requires token)*       |
 | DELETE | `/users/:id`                     | Permanently delete a user *(admin only)* |
+
+**For detailed API documentation, visit:** `http://localhost:3000/api-docs`
 
 ---
 
